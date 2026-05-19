@@ -4,17 +4,25 @@
   var lastForwardedTouch = 0;
   var selector = ".cell, #pauseButton, #restartButton, #shuffleButton";
 
+  function closestTarget(node) {
+    while (node && node !== document) {
+      if (node.matches && node.matches(selector)) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+
   document.addEventListener(
     "touchend",
     function (event) {
-      var target = event.target.closest && event.target.closest(selector);
+      var target = event.target.closest ? event.target.closest(selector) : closestTarget(event.target);
       if (!target || target.disabled) return;
 
       lastForwardedTouch = Date.now();
       if (event.cancelable) event.preventDefault();
       target.click();
     },
-    { passive: false },
+    { passive: false }
   );
 
   document.addEventListener(
@@ -25,6 +33,6 @@
         event.stopImmediatePropagation();
       }
     },
-    true,
+    true
   );
 })();

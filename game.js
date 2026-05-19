@@ -1,4 +1,5 @@
 const COLS = 6;
+window.CHAIN_DROP_HAS_DIRECT_TAP = true;
 const ROWS = 9;
 const MOVES = 24;
 const GROUP_SIZE = 4;
@@ -12,7 +13,7 @@ const DEFAULT_BLOCKS = [
   { id: "coral", label: "triangle", image: "" },
 ];
 const BLOCKS = normalizeBlocks(window.CHAIN_DROP_BLOCKS);
-const BLOCK_BY_ID = Object.fromEntries(BLOCKS.map((block) => [block.id, block]));
+const BLOCK_BY_ID = indexBlocks(BLOCKS);
 const BLOCK_IDS = BLOCKS.map((block) => block.id);
 const DEFAULT_CHARACTER = {
   enabled: true,
@@ -86,6 +87,14 @@ function normalizeBlocks(customBlocks) {
   return blocks.length >= 4 ? blocks : DEFAULT_BLOCKS;
 }
 
+function indexBlocks(blocks) {
+  const indexed = {};
+  for (const block of blocks) {
+    indexed[block.id] = block;
+  }
+  return indexed;
+}
+
 function normalizeCharacter(customCharacter) {
   const custom =
     customCharacter && typeof customCharacter === "object" ? customCharacter : DEFAULT_CHARACTER;
@@ -93,7 +102,8 @@ function normalizeCharacter(customCharacter) {
     custom.states && typeof custom.states === "object" ? custom.states : DEFAULT_CHARACTER.states;
   const states = {};
 
-  for (const [key, fallback] of Object.entries(DEFAULT_CHARACTER.states)) {
+  for (const key of Object.keys(DEFAULT_CHARACTER.states)) {
+    const fallback = DEFAULT_CHARACTER.states[key];
     const state = customStates[key] && typeof customStates[key] === "object" ? customStates[key] : {};
     states[key] = {
       image: String(state.image || fallback.image || "").trim(),
@@ -122,14 +132,48 @@ function init() {
   setBoardSize();
   startGame();
 
-  restartButton.addEventListener("click", startGame);
-  pauseButton.addEventListener("click", togglePause);
-  shuffleButton.addEventListener("click", shuffleBoard);
+  bindTap(restartButton, startGame);
+  bindTap(pauseButton, togglePause);
+  bindTap(shuffleButton, shuffleBoard);
   window.addEventListener("resize", setBoardSize);
 
   if ("ResizeObserver" in window) {
     new ResizeObserver(setBoardSize).observe(boardWrap);
   }
+}
+
+function bindTap(element, action) {
+  let lastDirectTap = 0;
+
+  const run = (event, directTap) => {
+    if (directTap) {
+      lastDirectTap = Date.now();
+      if (event.cancelable) event.preventDefault();
+    } else if (Date.now() - lastDirectTap < 500) {
+      return;
+    }
+
+    action(event);
+  };
+
+  if ("PointerEvent" in window) {
+    element.addEventListener("pointerup", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      run(event, true);
+    });
+  } else {
+    element.addEventListener(
+      "touchend",
+      (event) => {
+        run(event, true);
+      },
+      { passive: false },
+    );
+  }
+
+  element.addEventListener("click", (event) => {
+    run(event, false);
+  });
 }
 
 function setupCharacter() {
@@ -190,7 +234,7 @@ function createCells() {
       const cell = template.content.firstElementChild.cloneNode(true);
       cell.dataset.row = row;
       cell.dataset.col = col;
-      cell.addEventListener("click", () => handleCellPress(row, col));
+      bindTap(cell, () => handleCellPress(row, col));
       cells[row][col] = cell;
       fragment.append(cell);
     }
@@ -230,29 +274,39 @@ async function handleCellPress(row, col) {
   if (locked || paused || gameOver || !board[row][col]) return;
 
   locked = true;
-  setCellClass(row, col, "pop", true);
-  board[row][col] = null;
-  moves -= 1;
-  score += 10;
-  updateStats();
-  pulse(scoreText);
-  setState("Drop");
-  setCharacterMood("drop", { duration: 700 });
-  vibrate(12);
+  try {
+    setCellClass(row, col, "pop", true);
+    board[row][col] = null;
+    moves -= 1;
+    score += 10;
+    updateStats();
+    pulse(scoreText);
+    setState("Drop");
+    setCharacterMood("drop", { duration: 700 });
+    vibrate(12);
 
-  await wait(160);
-  render();
-  await resolveBoard();
+    await wait(160);
+    render();
+    await resolveBoard();
 
-  if (moves <= 0) {
-    endGame();
-    return;
+    if (moves <= 0) {
+      endGame();
+      return;
+    }
+
+    setState("Ready");
+    settleCharacterMood();
+  } catch (error) {
+    console.error("Chain Drop action failed", error);
+    setState("Ready");
+    settleCharacterMood();
+  } finally {
+    if (!gameOver && !paused) {
+      locked = false;
+      clearTransientClasses();
+      render();
+    }
   }
-
-  locked = false;
-  setState("Ready");
-  settleCharacterMood();
-  render();
 }
 
 async function resolveBoard() {
@@ -265,7 +319,7 @@ async function resolveBoard() {
 
     combo += 1;
     chainPeak = Math.max(chainPeak, combo);
-    const clearedCells = groups.flat();
+    const clearedCells = flattenGroups(groups);
     const clearScore = clearedCells.length * 45 * combo + groups.length * 80;
     score += clearScore;
     updateStats(combo);
@@ -286,6 +340,16 @@ async function resolveBoard() {
 
   updateStats(0);
   return didMove;
+}
+
+function flattenGroups(groups) {
+  const flattened = [];
+  for (const group of groups) {
+    for (const cell of group) {
+      flattened.push(cell);
+    }
+  }
+  return flattened;
 }
 
 async function collapseAndFill() {
