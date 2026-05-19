@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Chain Drop</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="stage">
+      <main class="game-shell" aria-label="Chain Drop">
+        <section class="topbar" aria-label="status">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <div>
+              <h1>Chain Drop</h1>
+              <p id="stateText">Ready</p>
+            </div>
+          </div>
+          <div class="controls">
+            <button id="pauseButton" class="icon-button" type="button" aria-label="Pause">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5h3v14H8zM13 5h3v14h-3z"></path>
+              </svg>
+            </button>
+            <button id="restartButton" class="icon-button" type="button" aria-label="Restart">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5a7 7 0 1 1-6.32 4H3.2A9 9 0 1 0 12 3v2z"></path>
+                <path d="M4 4v6h6V8H6V4z"></path>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="score-panel" aria-label="score">
+          <div>
+            <span>Score</span>
+            <strong id="scoreText">0</strong>
+          </div>
+          <div>
+            <span>Best</span>
+            <strong id="bestText">0</strong>
+          </div>
+          <div>
+            <span>Moves</span>
+            <strong id="movesText">24</strong>
+          </div>
+        </section>
+
+        <section class="board-wrap">
+          <div id="board" class="board" aria-label="game board"></div>
+          <div id="comboBadge" class="combo-badge" aria-live="polite"></div>
+        </section>
+
+        <section class="bottom-panel" aria-label="chain">
+          <div class="meter">
+            <span id="chainText">0 Chain</span>
+            <div class="meter-track">
+              <span id="chainMeter"></span>
+            </div>
+          </div>
+          <button id="shuffleButton" class="shuffle-button" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17 3h4v4h-2V5h-2a4 4 0 0 0-3.2 1.6L9.6 12l4.2 5.4A4 4 0 0 0 17 19h2v-2h2v4h-4a6 6 0 0 1-4.8-2.4L8.4 13.7l-1.6 2A6 6 0 0 1 2 18h-.5v-2H2a4 4 0 0 0 3.2-1.6L7.1 12 5.2 9.6A4 4 0 0 0 2 8h-.5V6H2a6 6 0 0 1 4.8 2.4l1.6 2 3.8-4.9A6 6 0 0 1 17 3z"></path>
+              <path d="M19 7V5h-2V3h4v4zM19 21v-2h-2v-2h4v4z"></path>
+            </svg>
+            Shuffle
+          </button>
+        </section>
+      </main>
+
+      <aside id="sidekick" class="sidekick" aria-live="polite" aria-label="sidekick">
+        <div class="sidekick-card">
+          <img id="sidekickImage" class="sidekick-image" src="" alt="" />
+          <p id="sidekickLine" class="sidekick-line">Ready!</p>
+        </div>
+      </aside>
+    </div>
+
+    <template id="cellTemplate">
+      <button class="cell" type="button">
+        <span class="piece" aria-hidden="true">
+          <span class="shine"></span>
+          <span class="face"></span>
+        </span>
+      </button>
+    </template>
+
+    <script src="block-assets.js"></script>
+    <script src="character-assets.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
