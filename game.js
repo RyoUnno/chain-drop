@@ -167,7 +167,7 @@ function bindTap(element, action) {
       (event) => {
         run(event, true);
       },
-      { passive: false },
+      { passive: false }
     );
   }
 
@@ -263,7 +263,7 @@ function makeFreshBoard() {
 
   do {
     next = Array.from({ length: ROWS }, () =>
-      Array.from({ length: COLS }, () => randomColor()),
+      Array.from({ length: COLS }, () => randomColor())
     );
   } while (findGroups(next).length > 0);
 
@@ -325,7 +325,7 @@ async function resolveBoard() {
     updateStats(combo);
     showCombo(combo, clearScore);
     setCharacterMood(combo >= 3 ? "bigCombo" : combo > 1 ? "combo" : "clear", {
-      duration: 1200,
+      duration: 1200
     });
     markGroups(clearedCells);
     vibrate(combo > 1 ? [16, 25, 20] : 18);
