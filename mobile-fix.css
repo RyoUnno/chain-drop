@@ -1,0 +1,25 @@
+body {
+  min-height: 100vh;
+}
+
+.stage {
+  height: calc(100vh - 28px);
+  max-height: 820px;
+}
+
+.cell,
+.icon-button,
+.shuffle-button {
+  touch-action: manipulation;
+  user-select: none;
+}
+
+@supports (height: 100svh) {
+  body {
+    min-height: 100svh;
+  }
+
+  .stage {
+    height: min(calc(100svh - 28px), 820px);
+  }
+}
