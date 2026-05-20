@@ -1,9 +1,10 @@
-# Character Assets
+# キャラ素材
 
-Put custom sidekick expression images in this folder, then point to them from
-`character-assets.js`.
+このフォルダには、右下ではなく画面左側に表示するキャラクターの表情差分を置きます。
 
-Example:
+設定はリポジトリ直下の `character-assets.js` で行います。
+
+例:
 
 ```js
 var expressions = {
@@ -15,29 +16,17 @@ var expressions = {
 };
 ```
 
-Supported states:
+想定している表情:
 
-- `idle`
-- `drop`
-- `clear`
-- `combo`
-- `bigCombo`
-- `lowMoves`
-- `shuffle`
-- `paused`
-- `finish`
-- `newBest`
+- `idle`: 通常
+- `cheer`: クリア、コンボ
+- `wow`: 大きいコンボ、シャッフル、ベスト更新
+- `worry`: 残り手数が少ない、ゲーム終了
+- `sleep`: 一時停止
 
-Recommended expression set:
+推奨:
 
-- `idle`
-- `cheer`
-- `wow`
-- `worry`
-- `sleep`
-
-Recommended image format:
-
-- Transparent PNG, WebP, or SVG
-- Square-ish images work best
-- Keep each file small for mobile loading
+- 透明PNG、WebP、SVG
+- 縦長の立ち絵も可
+- 全身が入った素材は下寄せで表示されます
+- スマホ向けにファイルサイズは小さめ
