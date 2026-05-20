@@ -1,30 +1,34 @@
 (function () {
   var STORAGE_KEY = "chain-drop-sound-muted";
-  var DEFAULT_SOUND_CONFIG = {
+  var MAX_COMBO_VOICE = 8;
+  var DEFAULT_AUDIO_CONFIG = {
     enabled: true,
     fallback: "synth",
     masterVolume: 1,
-    basePath: "assets/sounds/",
-    events: {
+    sfxBasePath: "assets/sounds/",
+    voiceBasePath: "assets/voices/",
+    sfx: {
       tap: { src: "", volume: 0.45 },
       drop: { src: "", volume: 0.55 },
-      clear: { src: "", volume: 0.75 },
-      combo: { src: "", volume: 0.8 },
-      bigCombo: { src: "", volume: 0.85 },
+      clearBlocks: { src: "", volume: 0.75 },
       shuffle: { src: "", volume: 0.7 },
       finish: { src: "", volume: 0.65 },
       newBest: { src: "", volume: 0.8 },
       soundOn: { src: "", volume: 0.5 },
     },
+    voices: {
+      volume: 0.9,
+      combos: {},
+    },
   };
 
   var soundButton = document.querySelector("#soundButton");
   var shuffleButton = document.querySelector("#shuffleButton");
-  var soundConfig = normalizeSoundConfig(window.CHAIN_DROP_SOUNDS);
+  var audioConfig = normalizeAudioConfig(window.CHAIN_DROP_AUDIO || window.CHAIN_DROP_SOUNDS);
   var audioContext = null;
-  var soundBuffers = {};
-  var soundLoading = {};
-  var soundFailed = {};
+  var fileBuffers = {};
+  var fileLoading = {};
+  var fileFailed = {};
   var lastShuffleSoundAt = 0;
   var muted = readMuted();
 
@@ -35,28 +39,64 @@
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"></path><path d="M17.6 9 20 11.4 22.4 9l1.1 1.1-2.4 2.4 2.4 2.4-1.1 1.1-2.4-2.4-2.4 2.4-1.1-1.1 2.4-2.4-2.4-2.4z"></path></svg>',
   };
 
-  function normalizeSoundConfig(customSounds) {
-    var custom = customSounds && typeof customSounds === "object" ? customSounds : {};
-    var basePath = String(custom.basePath || DEFAULT_SOUND_CONFIG.basePath || "");
-    var customEvents = custom.events && typeof custom.events === "object" ? custom.events : {};
-    var events = {};
+  function normalizeAudioConfig(customAudio) {
+    var custom = customAudio && typeof customAudio === "object" ? customAudio : {};
+    var legacyEvents = custom.events && typeof custom.events === "object" ? custom.events : {};
+    var customSfx = custom.sfx && typeof custom.sfx === "object" ? custom.sfx : legacyEvents;
+    var sfxBasePath = String(custom.sfxBasePath || custom.basePath || DEFAULT_AUDIO_CONFIG.sfxBasePath);
+    var voiceBasePath = String(custom.voiceBasePath || "assets/voices/");
+    var sfx = {};
 
-    Object.keys(DEFAULT_SOUND_CONFIG.events).forEach(function (name) {
-      var fallback = DEFAULT_SOUND_CONFIG.events[name];
-      var event = customEvents[name] && typeof customEvents[name] === "object" ? customEvents[name] : {};
-      events[name] = {
-        src: resolveSoundSrc(event.src || fallback.src || "", basePath),
-        volume: clampVolume(event.volume, fallback.volume),
-        playbackRate: clampRate(event.playbackRate, 1),
-      };
+    Object.keys(DEFAULT_AUDIO_CONFIG.sfx).forEach(function (name) {
+      var fallback = DEFAULT_AUDIO_CONFIG.sfx[name];
+      var legacyName = name === "clearBlocks" ? "clear" : name;
+      var item =
+        (customSfx[name] && typeof customSfx[name] === "object" && customSfx[name]) ||
+        (customSfx[legacyName] && typeof customSfx[legacyName] === "object" && customSfx[legacyName]) ||
+        {};
+      sfx[name] = normalizeFileEntry(item, fallback, sfxBasePath);
     });
 
     return {
       enabled: custom.enabled !== false,
       fallback: custom.fallback === "none" ? "none" : "synth",
-      masterVolume: clampVolume(custom.masterVolume, DEFAULT_SOUND_CONFIG.masterVolume),
-      basePath: basePath,
-      events: events,
+      masterVolume: clampVolume(custom.masterVolume, DEFAULT_AUDIO_CONFIG.masterVolume),
+      sfxBasePath: sfxBasePath,
+      voiceBasePath: voiceBasePath,
+      sfx: sfx,
+      voices: normalizeVoices(custom.voices, voiceBasePath),
+    };
+  }
+
+  function normalizeVoices(customVoices, basePath) {
+    var voices = customVoices && typeof customVoices === "object" ? customVoices : {};
+    var customCombos = voices.combos && typeof voices.combos === "object" ? voices.combos : {};
+    var combos = {};
+
+    for (var combo = 1; combo <= MAX_COMBO_VOICE; combo += 1) {
+      var list = Array.isArray(customCombos[combo]) ? customCombos[combo] : [];
+      combos[combo] = list
+        .slice(0, 3)
+        .map(function (item) {
+          return normalizeFileEntry(item, { src: "", volume: voices.volume || 0.9 }, basePath);
+        })
+        .filter(function (item) {
+          return item.src;
+        });
+    }
+
+    return {
+      volume: clampVolume(voices.volume, DEFAULT_AUDIO_CONFIG.voices.volume),
+      combos: combos,
+    };
+  }
+
+  function normalizeFileEntry(item, fallback, basePath) {
+    var source = item && typeof item === "object" ? item : {};
+    return {
+      src: resolveFileSrc(source.src || fallback.src || "", basePath),
+      volume: clampVolume(source.volume, fallback.volume),
+      playbackRate: clampRate(source.playbackRate, 1),
     };
   }
 
@@ -72,7 +112,7 @@
     return Math.max(0.25, Math.min(4, number));
   }
 
-  function resolveSoundSrc(src, basePath) {
+  function resolveFileSrc(src, basePath) {
     var value = String(src || "").trim();
     if (!value) return "";
     if (/^(https?:|data:|blob:|\/)/.test(value)) return value;
@@ -91,7 +131,7 @@
     try {
       localStorage.setItem(STORAGE_KEY, String(muted));
     } catch (error) {
-      // Sound still works even when storage is unavailable.
+      // Storage can be unavailable in privacy modes; sound still works.
     }
   }
 
@@ -114,7 +154,7 @@
   }
 
   function ensureAudio() {
-    if (muted || !soundConfig.enabled) return null;
+    if (muted || !audioConfig.enabled) return null;
     var context = getAudioContext();
     if (!context) return null;
 
@@ -151,51 +191,57 @@
     });
   }
 
-  function loadFileSound(name) {
-    var event = soundConfig.events[name];
-    if (!event || !event.src || soundBuffers[name] || soundFailed[name] || !window.fetch) {
-      return soundLoading[name] || null;
+  function loadFile(entry) {
+    if (!entry || !entry.src || fileBuffers[entry.src] || fileFailed[entry.src] || !window.fetch) {
+      return entry && entry.src ? fileLoading[entry.src] || null : null;
     }
 
     var context = getAudioContext();
     if (!context) return null;
 
-    soundLoading[name] = window
-      .fetch(event.src)
+    fileLoading[entry.src] = window
+      .fetch(entry.src)
       .then(function (response) {
-        if (!response.ok) throw new Error("Sound file not found: " + event.src);
+        if (!response.ok) throw new Error("Sound file not found: " + entry.src);
         return response.arrayBuffer();
       })
       .then(function (data) {
         return decodeAudio(context, data);
       })
       .then(function (buffer) {
-        soundBuffers[name] = buffer;
+        fileBuffers[entry.src] = buffer;
         return buffer;
       })
       .catch(function () {
-        soundFailed[name] = true;
+        fileFailed[entry.src] = true;
         return null;
       });
 
-    return soundLoading[name];
+    return fileLoading[entry.src];
   }
 
-  function preloadFileSounds() {
-    Object.keys(soundConfig.events).forEach(function (name) {
-      if (soundConfig.events[name].src) loadFileSound(name);
+  function preloadFiles() {
+    Object.keys(audioConfig.sfx).forEach(function (name) {
+      if (audioConfig.sfx[name].src) loadFile(audioConfig.sfx[name]);
     });
+
+    for (var combo = 1; combo <= MAX_COMBO_VOICE; combo += 1) {
+      audioConfig.voices.combos[combo].forEach(loadFile);
+    }
   }
 
-  function playFileSound(name, options) {
-    if (muted || !soundConfig.enabled) return true;
+  function playFile(entry, options) {
+    if (muted || !audioConfig.enabled) return true;
+    if (!entry || !entry.src) return false;
 
-    var event = soundConfig.events[name];
-    if (!event || !event.src) return false;
-
-    if (!soundBuffers[name]) {
-      loadFileSound(name);
-      return false;
+    if (!fileBuffers[entry.src]) {
+      var loading = loadFile(entry);
+      if (loading && loading.then) {
+        loading.then(function (buffer) {
+          if (buffer) playFile(entry, options);
+        });
+      }
+      return true;
     }
 
     var context = ensureAudio();
@@ -206,9 +252,9 @@
     var gain = context.createGain();
     var start = context.currentTime + (settings.delay || 0);
 
-    source.buffer = soundBuffers[name];
-    source.playbackRate.setValueAtTime(settings.playbackRate || event.playbackRate || 1, start);
-    gain.gain.setValueAtTime(event.volume * soundConfig.masterVolume, start);
+    source.buffer = fileBuffers[entry.src];
+    source.playbackRate.setValueAtTime(settings.playbackRate || entry.playbackRate || 1, start);
+    gain.gain.setValueAtTime(entry.volume * audioConfig.masterVolume, start);
 
     source.connect(gain);
     gain.connect(context.destination);
@@ -220,10 +266,20 @@
     return true;
   }
 
-  function playSound(name, synthCallback) {
-    if (muted || !soundConfig.enabled) return;
-    if (playFileSound(name)) return;
-    if (soundConfig.fallback !== "none" && synthCallback) synthCallback();
+  function playSfx(name, synthCallback) {
+    if (muted || !audioConfig.enabled) return;
+    if (playFile(audioConfig.sfx[name])) return;
+    if (audioConfig.fallback !== "none" && synthCallback) synthCallback();
+  }
+
+  function playComboVoice(combo) {
+    if (muted || !audioConfig.enabled) return;
+    var voiceCombo = Math.max(1, Math.min(MAX_COMBO_VOICE, combo));
+    var variants = audioConfig.voices.combos[voiceCombo] || [];
+    if (!variants.length) return;
+
+    var entry = variants[Math.floor(Math.random() * variants.length)];
+    playFile(entry, { delay: 0.08 });
   }
 
   function tone(frequency, duration, options) {
@@ -243,7 +299,7 @@
 
     gain.gain.setValueAtTime(0.0001, start);
     gain.gain.exponentialRampToValueAtTime(
-      (settings.volume || 0.08) * soundConfig.masterVolume,
+      (settings.volume || 0.08) * audioConfig.masterVolume,
       start + 0.012
     );
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
@@ -276,7 +332,7 @@
 
     filter.type = "bandpass";
     filter.frequency.setValueAtTime(settings.frequency || 950, start);
-    gain.gain.setValueAtTime((settings.volume || 0.035) * soundConfig.masterVolume, start);
+    gain.gain.setValueAtTime((settings.volume || 0.035) * audioConfig.masterVolume, start);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
 
     source.buffer = buffer;
@@ -300,7 +356,7 @@
     tone(180, 0.08, { to: 110, type: "triangle", volume: 0.05, delay: 0.08 });
   }
 
-  function synthClear(combo) {
+  function synthClearBlocks(combo) {
     var base = combo > 2 ? 520 : 440;
     tone(base, 0.11, { type: "triangle", volume: 0.055 });
     tone(base * 1.25, 0.12, { type: "triangle", volume: 0.052, delay: 0.08 });
@@ -322,37 +378,31 @@
     tone(260, 0.16, { to: 180, type: "triangle", volume: 0.045 });
   }
 
-  function playTap() {
-    playSound("tap", synthTap);
-  }
-
-  function playDrop() {
-    playSound("drop", synthDrop);
-  }
-
   function playClear(combo) {
-    var eventName = combo >= 3 ? "bigCombo" : combo > 1 ? "combo" : "clear";
-    if (muted || !soundConfig.enabled) return;
-    if (playFileSound(eventName) || (eventName !== "clear" && playFileSound("clear"))) return;
-    if (soundConfig.fallback !== "none") synthClear(combo);
-  }
-
-  function playShuffle() {
-    playSound("shuffle", synthShuffle);
+    playSfx("clearBlocks", function () {
+      synthClearBlocks(combo);
+    });
+    playComboVoice(combo);
   }
 
   function playShuffleOnce() {
     var now = Date.now();
     if (now - lastShuffleSoundAt < 220) return;
     lastShuffleSoundAt = now;
-    playShuffle();
+    playSfx("shuffle", synthShuffle);
   }
 
   function playFinish(newBest) {
-    if (muted || !soundConfig.enabled) return;
-    if (newBest && playFileSound("newBest")) return;
-    if (playFileSound("finish")) return;
-    if (soundConfig.fallback !== "none") synthFinish(newBest);
+    if (newBest) {
+      playSfx("newBest", function () {
+        synthFinish(true);
+      });
+      return;
+    }
+
+    playSfx("finish", function () {
+      synthFinish(false);
+    });
   }
 
   function setMuted(nextMuted) {
@@ -362,8 +412,8 @@
 
     if (!muted) {
       ensureAudio();
-      preloadFileSounds();
-      playSound("soundOn", function () {
+      preloadFiles();
+      playSfx("soundOn", function () {
         tone(520, 0.08, { type: "sine", volume: 0.04 });
       });
     }
@@ -391,7 +441,7 @@
       eventName,
       function () {
         ensureAudio();
-        preloadFileSounds();
+        preloadFiles();
       },
       { once: true, passive: true }
     );
@@ -402,9 +452,9 @@
     var playable = !locked && !paused && !gameOver && board[row] && board[row][col];
     if (playable) {
       ensureAudio();
-      preloadFileSounds();
-      playTap();
-      playDrop();
+      preloadFiles();
+      playSfx("tap", synthTap);
+      playSfx("drop", synthDrop);
     }
     return originalHandleCellPress(row, col);
   };
@@ -429,6 +479,5 @@
     return originalEndGame();
   };
 
-  preloadFileSounds();
   updateButton();
 })();
