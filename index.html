@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Chain Drop</title>
-    <link rel="stylesheet" href="styles.css?v=20260520-6" />
-    <link rel="stylesheet" href="mobile-fix.css?v=20260520-6" />
+    <link rel="stylesheet" href="styles.css?v=20260520-7" />
+    <link rel="stylesheet" href="mobile-fix.css?v=20260520-7" />
   </head>
   <body>
     <div class="stage">
@@ -49,7 +49,9 @@
         </section>
 
         <section class="board-wrap">
-          <div id="board" class="board" aria-label="game board"></div>
+          <div id="board" class="board" role="application" tabindex="0" aria-label="game board">
+            <canvas id="boardCanvas" class="board-canvas" aria-hidden="true"></canvas>
+          </div>
           <div id="comboBadge" class="combo-badge" aria-live="polite"></div>
         </section>
 
@@ -78,20 +80,10 @@
       </aside>
     </div>
 
-    <template id="cellTemplate">
-      <button class="cell" type="button">
-        <span class="piece" aria-hidden="true">
-          <span class="shine"></span>
-          <span class="face"></span>
-        </span>
-      </button>
-    </template>
-
-    <script src="block-assets.js?v=20260520-6"></script>
-    <script src="character-assets.js?v=20260520-6"></script>
-    <script src="compat.js?v=20260520-6"></script>
-    <script src="ios-repaint.js?v=20260520-6"></script>
-    <script src="game.js?v=20260520-6"></script>
-    <script src="mobile-touch.js?v=20260520-6"></script>
+    <script src="block-assets.js?v=20260520-7"></script>
+    <script src="character-assets.js?v=20260520-7"></script>
+    <script src="compat.js?v=20260520-7"></script>
+    <script src="game.js?v=20260520-7"></script>
+    <script src="mobile-touch.js?v=20260520-7"></script>
   </body>
 </html>
