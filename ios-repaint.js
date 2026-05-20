@@ -2,9 +2,8 @@
   var board = document.querySelector("#board");
   if (!board) return;
 
-  var activeUntil = 0;
-  var framePending = false;
   var paintTick = 0;
+  var pumpToken = 0;
   var requestFrame =
     window.requestAnimationFrame ||
     function (callback) {
@@ -13,44 +12,42 @@
       }, 16);
     };
 
-  function now() {
-    return window.performance && window.performance.now ? window.performance.now() : Date.now();
-  }
-
   function forcePaint() {
     paintTick += 1;
     board.dataset.iosPaintTick = String(paintTick);
-    board.style.transform = "translateZ(0)";
-    board.style.webkitTransform = "translateZ(0)";
     void board.offsetHeight;
   }
 
-  function pump(timestamp) {
-    framePending = false;
+  function wakePaint(frames) {
+    var token = (pumpToken += 1);
+    var remaining = Math.max(2, Math.min(Number(frames) || 6, 12));
     forcePaint();
-    if (timestamp < activeUntil) {
-      queuePump();
-    }
-  }
 
-  function queuePump() {
-    if (framePending) return;
-    framePending = true;
+    function pump() {
+      if (token !== pumpToken) return;
+      forcePaint();
+      remaining -= 1;
+      if (remaining > 0) requestFrame(pump);
+    }
+
     requestFrame(pump);
   }
 
-  function wakePaint() {
-    activeUntil = now() + 2600;
-    forcePaint();
-    queuePump();
-  }
-
-  board.addEventListener("pointerup", wakePaint, true);
-  board.addEventListener("touchend", wakePaint, true);
-  board.addEventListener("click", wakePaint, true);
+  window.ChainDropRepaint = { wake: wakePaint };
+  board.addEventListener("click", function () {
+    wakePaint(8);
+  }, true);
 
   if ("MutationObserver" in window) {
-    new MutationObserver(wakePaint).observe(board, {
+    var observerQueued = false;
+    new MutationObserver(function () {
+      if (observerQueued) return;
+      observerQueued = true;
+      requestFrame(function () {
+        observerQueued = false;
+        wakePaint(4);
+      });
+    }).observe(board, {
       subtree: true,
       childList: true,
       attributes: true,
