@@ -1,8 +1,10 @@
-# Block Assets
+# ブロック素材
 
-Put custom block images in this folder, then point to them from `block-assets.js`.
+このフォルダには、盤面に表示するブロック画像を置きます。
 
-Example:
+設定はリポジトリ直下の `block-assets.js` で行います。
+
+例:
 
 ```js
 {
@@ -12,9 +14,9 @@ Example:
 }
 ```
 
-Recommended image format:
+推奨:
 
-- PNG, WebP, SVG, or JPEG
-- Square images work best
-- Transparent PNG/WebP/SVG looks best on the board
-- Keep each file small for mobile loading
+- PNG、WebP、SVG、JPEG
+- 正方形に近い画像
+- 透明PNG、WebP、SVG
+- スマホ向けに小さめのファイルサイズ
