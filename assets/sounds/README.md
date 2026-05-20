@@ -1,40 +1,34 @@
-# Sound Assets
+# 効果音素材
 
-Put short sound effect files in this folder, then point to them from `audio-assets.js`.
+このフォルダには、ブロックが消える音やシャッフル音などの効果音を置きます。
 
-Example:
+設定はリポジトリ直下の `audio-assets.js` の `sfx` で行います。
+
+例:
 
 ```js
-window.CHAIN_DROP_SOUNDS = {
-  basePath: "assets/sounds/",
-  events: {
-    tap: {
-      src: "tap.mp3",
-      volume: 0.45,
-    },
-    clear: {
-      src: "clear.mp3",
-      volume: 0.75,
-    },
+sfx: {
+  clearBlocks: {
+    src: "clear-blocks.mp3",
+    volume: 0.75,
   },
-};
+}
 ```
 
-Supported events:
+対応している主な効果音:
 
 - `tap`
 - `drop`
-- `clear`
-- `combo`
-- `bigCombo`
+- `clearBlocks`
 - `shuffle`
 - `finish`
 - `newBest`
 - `soundOn`
 
-Recommended file format:
+推奨:
 
-- MP3 or M4A for broad mobile support
-- OGG or WAV also works in many browsers
-- Keep each effect short, ideally under 1 second
-- Keep each file small for mobile loading
+- MP3 または M4A
+- 1秒未満の短い音
+- スマホ向けに小さめのファイルサイズ
+
+コンボボイスはこのフォルダではなく `assets/voices/` に置いてください。
