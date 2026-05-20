@@ -1,23 +1,17 @@
 # Character Assets
 
-Put custom sidekick images in this folder, then point to them from `character-assets.js`.
+Put custom sidekick expression images in this folder, then point to them from
+`character-assets.js`.
 
 Example:
 
 ```js
-window.CHAIN_DROP_CHARACTER = {
-  enabled: true,
-  name: "Mimi",
-  states: {
-    idle: {
-      image: "assets/characters/my-idle.png",
-      line: "Ready!",
-    },
-    combo: {
-      image: "assets/characters/my-combo.png",
-      line: "Chain!",
-    },
-  },
+var expressions = {
+  idle: "my-idle.png",
+  cheer: "my-cheer.png",
+  wow: "my-wow.png",
+  worry: "my-worry.png",
+  sleep: "my-sleep.png",
 };
 ```
 
@@ -33,6 +27,14 @@ Supported states:
 - `paused`
 - `finish`
 - `newBest`
+
+Recommended expression set:
+
+- `idle`
+- `cheer`
+- `wow`
+- `worry`
+- `sleep`
 
 Recommended image format:
 
