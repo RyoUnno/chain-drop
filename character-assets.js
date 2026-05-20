@@ -1,6 +1,6 @@
-// Swap sidekick art here.
-// Put PNG, WebP, SVG, or JPEG expression files in assets/characters/.
-// Change expressions to your file names, then map each game state to an expression.
+// キャラ素材の差し替え設定です。
+// assets/characters/ に PNG, WebP, SVG, JPEG の表情差分を置いてください。
+// 縦長の立ち絵もそのまま入れられます。画面左側で object-fit: contain により全身が収まります。
 (function () {
   var basePath = "assets/characters/";
   var expressions = {
