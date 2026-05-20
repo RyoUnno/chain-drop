@@ -14,6 +14,15 @@ body {
   user-select: none;
 }
 
+@media (hover: none), (pointer: coarse) {
+  .piece {
+    animation: none;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+    will-change: auto;
+  }
+}
+
 @supports (height: 100svh) {
   body {
     min-height: 100svh;
