@@ -2,7 +2,7 @@
   if (window.CHAIN_DROP_HAS_DIRECT_TAP) return;
 
   var lastForwardedTouch = 0;
-  var selector = ".cell, #pauseButton, #restartButton, #shuffleButton";
+  var selector = ".cell, #pauseButton, #restartButton, #soundButton, #shuffleButton";
 
   function closestTarget(node) {
     while (node && node !== document) {
