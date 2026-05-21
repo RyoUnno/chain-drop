@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Chain Drop</title>
-    <link rel="stylesheet" href="styles.css?v=20260521-6" />
-    <link rel="stylesheet" href="mobile-fix.css?v=20260521-6" />
-    <link rel="stylesheet" href="layout-fix.css?v=20260521-6" />
-    <link rel="stylesheet" href="stage-fix.css?v=20260521-6" />
+    <link rel="stylesheet" href="styles.css?v=20260521-7" />
+    <link rel="stylesheet" href="mobile-fix.css?v=20260521-7" />
+    <link rel="stylesheet" href="layout-fix.css?v=20260521-7" />
+    <link rel="stylesheet" href="stage-fix.css?v=20260521-7" />
   </head>
   <body>
     <div class="stage">
@@ -63,18 +63,37 @@
           <div id="comboBadge" class="combo-badge" aria-live="polite"></div>
         </section>
 
-        <section class="bottom-panel" aria-label="chain and stage select">
+        <section class="bottom-panel" aria-label="chain">
           <div class="meter">
             <span id="chainText">0 Chain</span>
             <div class="meter-track">
               <span id="chainMeter"></span>
             </div>
           </div>
-          <div class="stage-select" aria-label="stage select">
-            <span class="stage-select-label">Stage Select</span>
-            <div id="stageSelect" class="stage-select-buttons"></div>
-          </div>
           <button id="shuffleButton" type="button" hidden disabled aria-hidden="true" tabindex="-1"></button>
+        </section>
+
+        <section id="titleScreen" class="flow-screen flow-title" aria-label="title">
+          <div class="flow-title-mark" aria-hidden="true"></div>
+          <h2>Chain Drop</h2>
+          <button id="titleStartButton" class="flow-primary" type="button">Start</button>
+        </section>
+
+        <section id="stageMenuScreen" class="flow-screen flow-menu" aria-label="stage select">
+          <div class="flow-heading">
+            <span>Stage Select</span>
+            <strong id="unlockText">1/5</strong>
+          </div>
+          <div id="stageSelect" class="stage-select-list"></div>
+        </section>
+
+        <section id="resultScreen" class="flow-screen flow-result" aria-label="result">
+          <div class="flow-result-copy">
+            <span id="resultKicker">Stage 1</span>
+            <h2 id="resultTitle">Stage Clear</h2>
+            <p id="resultText">Next stage unlocked</p>
+          </div>
+          <button id="resultMenuButton" class="flow-primary" type="button">Stage Select</button>
         </section>
       </main>
 
@@ -86,14 +105,15 @@
       </aside>
     </div>
 
-    <script src="block-assets.js?v=20260521-6"></script>
-    <script src="character-assets.js?v=20260521-6"></script>
-    <script src="audio-assets.js?v=20260521-6"></script>
-    <script src="compat.js?v=20260521-6"></script>
-    <script src="game.js?v=20260521-6"></script>
-    <script src="speed-tuning.js?v=20260521-6"></script>
-    <script src="stage-system.js?v=20260521-6"></script>
-    <script src="sound-effects.js?v=20260521-6"></script>
-    <script src="mobile-touch.js?v=20260521-6"></script>
+    <script src="block-assets.js?v=20260521-7"></script>
+    <script src="character-assets.js?v=20260521-7"></script>
+    <script src="audio-assets.js?v=20260521-7"></script>
+    <script src="compat.js?v=20260521-7"></script>
+    <script src="game.js?v=20260521-7"></script>
+    <script src="speed-tuning.js?v=20260521-7"></script>
+    <script src="stage-system.js?v=20260521-7"></script>
+    <script src="sound-effects.js?v=20260521-7"></script>
+    <script src="flow-system.js?v=20260521-7"></script>
+    <script src="mobile-touch.js?v=20260521-7"></script>
   </body>
 </html>
