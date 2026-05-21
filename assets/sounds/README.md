@@ -20,6 +20,7 @@ sfx: {
 - `tap`
 - `drop`
 - `clearBlocks`
+- `bomb`
 - `shuffle`
 - `finish`
 - `newBest`
