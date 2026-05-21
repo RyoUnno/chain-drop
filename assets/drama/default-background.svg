@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" role="img" aria-label="Drama background">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#78d7ff"/>
+      <stop offset="0.54" stop-color="#b9edff"/>
+      <stop offset="1" stop-color="#fff0b8"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#58d58f"/>
+      <stop offset="1" stop-color="#25a66f"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="640" fill="url(#sky)"/>
+  <circle cx="790" cy="110" r="58" fill="#fff17a"/>
+  <g opacity="0.55" fill="#fff">
+    <ellipse cx="150" cy="120" rx="82" ry="28"/>
+    <ellipse cx="216" cy="120" rx="62" ry="22"/>
+    <ellipse cx="590" cy="170" rx="88" ry="30"/>
+    <ellipse cx="665" cy="170" rx="58" ry="21"/>
+  </g>
+  <path d="M0 395 C130 335 260 376 380 330 C535 272 690 320 960 246 L960 640 L0 640Z" fill="#3abf8d"/>
+  <path d="M0 460 C150 390 260 445 420 386 C590 324 728 392 960 322 L960 640 L0 640Z" fill="url(#ground)"/>
+  <path d="M0 555 C180 505 310 540 465 498 C620 456 770 500 960 448 L960 640 L0 640Z" fill="#168a63" opacity="0.45"/>
+  <g fill="#fff6d0" opacity="0.72">
+    <circle cx="175" cy="438" r="8"/>
+    <circle cx="222" cy="426" r="6"/>
+    <circle cx="718" cy="390" r="7"/>
+    <circle cx="778" cy="372" r="5"/>
+  </g>
+</svg>
