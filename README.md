@@ -96,10 +96,17 @@ window.CHAIN_DROP_STAGES = [
 
 ステージ開始前とステージクリア後の会話は `drama-assets.js` で設定します。
 立ち絵は `assets/characters/` に置き、`characters` に名前と画像を登録します。
+背景は `assets/drama/` に置き、`backgrounds` に名前を登録します。
 
 ```js
 window.CHAIN_DROP_DRAMAS = {
   basePath: "assets/characters/",
+  backgroundBasePath: "assets/drama/",
+  defaultBackground: "field",
+  backgrounds: {
+    field: "default-background.svg",
+    town: "town.png",
+  },
   characters: {
     hero: { name: "ヒーロー", image: "hero.png" },
     rival: { name: "ライバル", image: "rival.png" },
@@ -107,6 +114,7 @@ window.CHAIN_DROP_DRAMAS = {
   stages: {
     1: {
       before: {
+        background: "town",
         cast: ["hero", "rival"],
         lines: [
           { speaker: "hero", text: "ここが最初のステージだね。" },
@@ -123,6 +131,7 @@ window.CHAIN_DROP_DRAMAS = {
 
 `stages` の数字はステージ番号です。`before` がステージ開始前、`clear` がクリア後に再生されます。
 `cast` に表示したいキャラを並べ、各行の `speaker` に発言者のIDを指定します。発言していないキャラは自動で暗くグレーアウトします。
+`background` には `backgrounds` に登録した名前か、画像ファイル名を直接指定できます。`background` を省略したシーンでは `defaultBackground` が使われます。
 
 ## 効果音を差し替える
 
