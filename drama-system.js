@@ -1,6 +1,7 @@
 (function () {
   var gameShell = document.querySelector(".game-shell");
   var dramaScreen = document.querySelector("#dramaScreen");
+  var dramaBackdrop = document.querySelector("#dramaBackdrop");
   var dramaCast = document.querySelector("#dramaCast");
   var dramaSpeaker = document.querySelector("#dramaSpeaker");
   var dramaMessage = document.querySelector("#dramaMessage");
@@ -20,8 +21,12 @@
   function normalizeConfig(source) {
     var custom = source && typeof source === "object" ? source : {};
     var basePath = String(custom.basePath || "assets/characters/");
+    var backgroundBasePath = String(custom.backgroundBasePath || "assets/drama/");
     var characters = {};
+    var backgrounds = {};
+    var defaultBackgroundRef = String(custom.defaultBackground || custom.background || "");
     var rawCharacters = custom.characters && typeof custom.characters === "object" ? custom.characters : {};
+    var rawBackgrounds = custom.backgrounds && typeof custom.backgrounds === "object" ? custom.backgrounds : {};
 
     Object.keys(rawCharacters).forEach(function (id) {
       var character = rawCharacters[id] || {};
@@ -30,6 +35,10 @@
         name: String(character.name || id),
         image: resolveAsset(character.image || character.src || "", basePath),
       };
+    });
+
+    Object.keys(rawBackgrounds).forEach(function (id) {
+      backgrounds[id] = resolveAsset(rawBackgrounds[id], backgroundBasePath);
     });
 
     if (!Object.keys(characters).length && window.CHAIN_DROP_CHARACTER) {
@@ -43,7 +52,10 @@
 
     return {
       basePath: basePath,
+      backgroundBasePath: backgroundBasePath,
       characters: characters,
+      backgrounds: backgrounds,
+      defaultBackground: backgrounds[defaultBackgroundRef] || resolveAsset(defaultBackgroundRef, backgroundBasePath),
       stages: custom.stages && typeof custom.stages === "object" ? custom.stages : {},
       defaults: custom.defaults && typeof custom.defaults === "object" ? custom.defaults : {},
     };
@@ -54,6 +66,13 @@
     if (!value) return "";
     if (/^(https?:|data:|blob:|\/|assets\/)/.test(value)) return value;
     return String(basePath || "") + value;
+  }
+
+  function resolveDramaBackground(src) {
+    var value = String(src || "").trim();
+    if (!value) return "";
+    if (config.backgrounds[value]) return config.backgrounds[value];
+    return resolveAsset(value, config.backgroundBasePath);
   }
 
   function getStageScene(stageIndex, type) {
@@ -67,12 +86,14 @@
 
     var sceneCast = [];
     var lines = [];
+    var sceneBackground = "";
 
     if (Array.isArray(rawScene)) {
       lines = rawScene;
     } else if (rawScene && typeof rawScene === "object") {
       sceneCast = Array.isArray(rawScene.cast) ? rawScene.cast.slice() : [];
       lines = Array.isArray(rawScene.lines) ? rawScene.lines : Array.isArray(rawScene.steps) ? rawScene.steps : [];
+      sceneBackground = String(rawScene.background || rawScene.backdrop || "");
     }
 
     var normalizedLines = lines
@@ -84,6 +105,7 @@
           speaker: speaker,
           text: String(line.text || line.message || ""),
           cast: cast.map(String),
+          background: String(line.background || line.backdrop || ""),
         };
       })
       .filter(function (line) {
@@ -113,6 +135,7 @@
     return {
       stageIndex: stageIndex,
       type: type,
+      background: resolveDramaBackground(sceneBackground) || config.defaultBackground,
       cast: sceneWideCast,
       lines: normalizedLines,
     };
@@ -138,6 +161,7 @@
     dramaScreen.hidden = false;
     document.body.classList.add("is-drama-open");
     gameShell.dataset.flow = "drama";
+    applySceneBackground(scene.lines[0].background || scene.background);
 
     try {
       locked = true;
@@ -158,6 +182,7 @@
     dramaCast.textContent = "";
     dramaSpeaker.textContent = "";
     dramaMessage.textContent = "";
+    clearSceneBackground();
     document.body.classList.remove("is-drama-open");
     done();
   }
@@ -177,6 +202,7 @@
     var line = activeScene.scene.lines[activeScene.index];
     var castIds = line.cast && line.cast.length ? line.cast : activeScene.scene.cast;
     var speaker = getCharacter(line.speaker);
+    applySceneBackground(line.background || activeScene.scene.background);
 
     dramaCast.textContent = "";
     castIds.forEach(function (id) {
@@ -190,6 +216,19 @@
 
   function getCharacter(id) {
     return config.characters[id] || { id: id, name: id || "Story", image: "" };
+  }
+
+  function applySceneBackground(src) {
+    var background = resolveDramaBackground(src);
+    if (!dramaBackdrop) return;
+    dramaBackdrop.style.backgroundImage = background ? "url(\"" + background.replace(/"/g, "%22") + "\")" : "";
+    dramaScreen.classList.toggle("has-drama-background", Boolean(background));
+  }
+
+  function clearSceneBackground() {
+    if (!dramaBackdrop) return;
+    dramaBackdrop.style.backgroundImage = "";
+    dramaScreen.classList.remove("has-drama-background");
   }
 
   function createCharacterNode(id, speakerId) {
