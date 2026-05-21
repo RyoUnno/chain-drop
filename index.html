@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Chain Drop</title>
-    <link rel="stylesheet" href="styles.css?v=20260521-5" />
-    <link rel="stylesheet" href="mobile-fix.css?v=20260521-5" />
-    <link rel="stylesheet" href="layout-fix.css?v=20260521-5" />
-    <link rel="stylesheet" href="stage-fix.css?v=20260521-5" />
+    <link rel="stylesheet" href="styles.css?v=20260521-6" />
+    <link rel="stylesheet" href="mobile-fix.css?v=20260521-6" />
+    <link rel="stylesheet" href="layout-fix.css?v=20260521-6" />
+    <link rel="stylesheet" href="stage-fix.css?v=20260521-6" />
   </head>
   <body>
     <div class="stage">
@@ -63,20 +63,18 @@
           <div id="comboBadge" class="combo-badge" aria-live="polite"></div>
         </section>
 
-        <section class="bottom-panel" aria-label="chain">
+        <section class="bottom-panel" aria-label="chain and stage select">
           <div class="meter">
             <span id="chainText">0 Chain</span>
             <div class="meter-track">
               <span id="chainMeter"></span>
             </div>
           </div>
-          <button id="shuffleButton" class="shuffle-button" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M17 3h4v4h-2V5h-2a4 4 0 0 0-3.2 1.6L9.6 12l4.2 5.4A4 4 0 0 0 17 19h2v-2h2v4h-4a6 6 0 0 1-4.8-2.4L8.4 13.7l-1.6 2A6 6 0 0 1 2 18h-.5v-2H2a4 4 0 0 0 3.2-1.6L7.1 12 5.2 9.6A4 4 0 0 0 2 8h-.5V6H2a6 6 0 0 1 4.8 2.4l1.6 2 3.8-4.9A6 6 0 0 1 17 3z"></path>
-              <path d="M19 7V5h-2V3h4v4zM19 21v-2h-2v-2h4v4z"></path>
-            </svg>
-            Shuffle
-          </button>
+          <div class="stage-select" aria-label="stage select">
+            <span class="stage-select-label">Stage Select</span>
+            <div id="stageSelect" class="stage-select-buttons"></div>
+          </div>
+          <button id="shuffleButton" type="button" hidden disabled aria-hidden="true" tabindex="-1"></button>
         </section>
       </main>
 
@@ -88,14 +86,14 @@
       </aside>
     </div>
 
-    <script src="block-assets.js?v=20260521-5"></script>
-    <script src="character-assets.js?v=20260521-5"></script>
-    <script src="audio-assets.js?v=20260521-5"></script>
-    <script src="compat.js?v=20260521-5"></script>
-    <script src="game.js?v=20260521-5"></script>
-    <script src="speed-tuning.js?v=20260521-5"></script>
-    <script src="stage-system.js?v=20260521-5"></script>
-    <script src="sound-effects.js?v=20260521-5"></script>
-    <script src="mobile-touch.js?v=20260521-5"></script>
+    <script src="block-assets.js?v=20260521-6"></script>
+    <script src="character-assets.js?v=20260521-6"></script>
+    <script src="audio-assets.js?v=20260521-6"></script>
+    <script src="compat.js?v=20260521-6"></script>
+    <script src="game.js?v=20260521-6"></script>
+    <script src="speed-tuning.js?v=20260521-6"></script>
+    <script src="stage-system.js?v=20260521-6"></script>
+    <script src="sound-effects.js?v=20260521-6"></script>
+    <script src="mobile-touch.js?v=20260521-6"></script>
   </body>
 </html>
