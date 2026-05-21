@@ -1,38 +1,53 @@
 // ドラマ用のキャラと台詞をここで差し替えます。
 // 立ち絵は assets/characters/ に置くと、ファイル名だけで指定できます。
+// 背景は assets/drama/ に置くと、ファイル名だけで指定できます。
 (function () {
-  var basePath = "assets/characters/";
+  var characterBasePath = "assets/characters/";
+  var backgroundBasePath = "assets/drama/";
 
-  function asset(src) {
+  function characterAsset(src) {
     var value = String(src || "").trim();
     if (!value) return "";
     if (/^(https?:|data:|blob:|\/|assets\/)/.test(value)) return value;
-    return basePath + value;
+    return characterBasePath + value;
+  }
+
+  function backgroundAsset(src) {
+    var value = String(src || "").trim();
+    if (!value) return "";
+    if (/^(https?:|data:|blob:|\/|assets\/)/.test(value)) return value;
+    return backgroundBasePath + value;
   }
 
   window.CHAIN_DROP_DRAMAS = {
-    basePath: basePath,
+    basePath: characterBasePath,
+    backgroundBasePath: backgroundBasePath,
+    defaultBackground: "field",
+    backgrounds: {
+      field: backgroundAsset("default-background.svg"),
+    },
     characters: {
       mimi: {
         name: "Mimi",
-        image: asset("idle.svg"),
+        image: characterAsset("idle.svg"),
       },
       pico: {
         name: "Pico",
-        image: asset("cheer.svg"),
+        image: characterAsset("cheer.svg"),
       },
       sora: {
         name: "Sora",
-        image: asset("wow.svg"),
+        image: characterAsset("wow.svg"),
       },
       rina: {
         name: "Rina",
-        image: asset("worry.svg"),
+        image: characterAsset("worry.svg"),
       },
     },
     stages: {
       1: {
         before: {
+          background: "field",
           cast: ["mimi", "pico"],
           lines: [
             { speaker: "mimi", text: "ここから始めよう。まずは色をつなげて消してみて！" },
@@ -40,6 +55,7 @@
           ],
         },
         clear: {
+          background: "field",
           cast: ["pico", "sora"],
           lines: [
             { speaker: "pico", text: "いい感じ！ 次のステージが開いたよ。" },
