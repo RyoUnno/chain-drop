@@ -1,9 +1,11 @@
 // ドラマ用のキャラと台詞をここで差し替えます。
 // 立ち絵は assets/characters/ に置くと、ファイル名だけで指定できます。
 // 背景は assets/drama/ に置くと、ファイル名だけで指定できます。
+// ボイスは assets/voices/drama/ に置くと、ファイル名だけで指定できます。
 (function () {
   var characterBasePath = "assets/characters/";
   var backgroundBasePath = "assets/drama/";
+  var voiceBasePath = "assets/voices/drama/";
 
   function characterAsset(src) {
     var value = String(src || "").trim();
@@ -22,6 +24,7 @@
   window.CHAIN_DROP_DRAMAS = {
     basePath: characterBasePath,
     backgroundBasePath: backgroundBasePath,
+    voiceBasePath: voiceBasePath,
     defaultBackground: "field",
     backgrounds: {
       field: backgroundAsset("default-background.svg"),
@@ -50,16 +53,16 @@
           background: "field",
           cast: ["mimi", "pico"],
           lines: [
-            { speaker: "mimi", text: "ここから始めよう。まずは色をつなげて消してみて！" },
-            { speaker: "pico", text: "ステージ1、いってみよう！" },
+            { speaker: "mimi", text: "ここから始めよう。まずは色をつなげて消してみて！", voice: "" },
+            { speaker: "pico", text: "ステージ1、いってみよう！", voice: "" },
           ],
         },
         clear: {
           background: "field",
           cast: ["pico", "sora"],
           lines: [
-            { speaker: "pico", text: "いい感じ！ 次のステージが開いたよ。" },
-            { speaker: "sora", text: "連鎖のコツ、つかめてきたかも！" },
+            { speaker: "pico", text: "いい感じ！ 次のステージが開いたよ。", voice: "" },
+            { speaker: "sora", text: "連鎖のコツ、つかめてきたかも！", voice: "" },
           ],
         },
       },

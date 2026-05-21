@@ -4,11 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Chain Drop</title>
-    <link rel="stylesheet" href="styles.css?v=20260521-11" />
-    <link rel="stylesheet" href="mobile-fix.css?v=20260521-11" />
-    <link rel="stylesheet" href="layout-fix.css?v=20260521-11" />
-    <link rel="stylesheet" href="stage-fix.css?v=20260521-11" />
-    <link rel="stylesheet" href="drama-background.css?v=20260521-11" />
+    <link rel="stylesheet" href="styles.css?v=20260521-12" />
+    <link rel="stylesheet" href="mobile-fix.css?v=20260521-12" />
+    <link rel="stylesheet" href="layout-fix.css?v=20260521-12" />
+    <link rel="stylesheet" href="stage-fix.css?v=20260521-12" />
+    <link rel="stylesheet" href="drama-background.css?v=20260521-12" />
+    <link rel="stylesheet" href="rewards-system.css?v=20260521-12" />
   </head>
   <body>
     <div class="stage">
@@ -65,6 +66,10 @@
         </section>
 
         <section class="bottom-panel" aria-label="chain">
+          <div class="mission-strip" aria-label="mission">
+            <span>Mission</span>
+            <strong id="missionText">2 Chain以上を出す</strong>
+          </div>
           <div class="meter">
             <span id="chainText">0 Chain</span>
             <div class="meter-track">
@@ -92,7 +97,10 @@
           <div class="flow-result-copy">
             <span id="resultKicker">Stage 1</span>
             <h2 id="resultTitle">Stage Clear</h2>
+            <div id="resultStars" class="result-stars" aria-label="0 stars"></div>
             <p id="resultText">Next stage unlocked</p>
+            <p id="resultMission" class="result-mission"></p>
+            <p id="resultBonus" class="result-bonus"></p>
           </div>
           <button id="resultMenuButton" class="flow-primary" type="button">Stage Select</button>
         </section>
@@ -116,19 +124,20 @@
       </aside>
     </div>
 
-    <script src="block-assets.js?v=20260521-11"></script>
-    <script src="character-assets.js?v=20260521-11"></script>
-    <script src="audio-assets.js?v=20260521-11"></script>
-    <script src="map-assets.js?v=20260521-11"></script>
-    <script src="drama-assets.js?v=20260521-11"></script>
-    <script src="compat.js?v=20260521-11"></script>
-    <script src="game.js?v=20260521-11"></script>
-    <script src="speed-tuning.js?v=20260521-11"></script>
-    <script src="stage-system.js?v=20260521-11"></script>
-    <script src="sound-effects.js?v=20260521-11"></script>
-    <script src="flow-system.js?v=20260521-11"></script>
-    <script src="drama-system.js?v=20260521-11"></script>
-    <script src="map-stage-menu.js?v=20260521-11"></script>
-    <script src="mobile-touch.js?v=20260521-11"></script>
+    <script src="block-assets.js?v=20260521-12"></script>
+    <script src="character-assets.js?v=20260521-12"></script>
+    <script src="audio-assets.js?v=20260521-12"></script>
+    <script src="map-assets.js?v=20260521-12"></script>
+    <script src="drama-assets.js?v=20260521-12"></script>
+    <script src="compat.js?v=20260521-12"></script>
+    <script src="game.js?v=20260521-12"></script>
+    <script src="speed-tuning.js?v=20260521-12"></script>
+    <script src="stage-system.js?v=20260521-12"></script>
+    <script src="sound-effects.js?v=20260521-12"></script>
+    <script src="flow-system.js?v=20260521-12"></script>
+    <script src="drama-system.js?v=20260521-12"></script>
+    <script src="map-stage-menu.js?v=20260521-12"></script>
+    <script src="rewards-system.js?v=20260521-12"></script>
+    <script src="mobile-touch.js?v=20260521-12"></script>
   </body>
 </html>
