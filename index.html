@@ -4,9 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Chain Drop</title>
-    <link rel="stylesheet" href="styles.css?v=20260521-4" />
-    <link rel="stylesheet" href="mobile-fix.css?v=20260521-4" />
-    <link rel="stylesheet" href="layout-fix.css?v=20260521-4" />
+    <link rel="stylesheet" href="styles.css?v=20260521-5" />
+    <link rel="stylesheet" href="mobile-fix.css?v=20260521-5" />
+    <link rel="stylesheet" href="layout-fix.css?v=20260521-5" />
+    <link rel="stylesheet" href="stage-fix.css?v=20260521-5" />
   </head>
   <body>
     <div class="stage">
@@ -37,17 +38,22 @@
 
         <section class="score-panel" aria-label="score">
           <div>
+            <span>Stage</span>
+            <strong id="stageText">1</strong>
+          </div>
+          <div>
             <span>Score</span>
             <strong id="scoreText">0</strong>
           </div>
           <div>
-            <span>Best</span>
-            <strong id="bestText">0</strong>
+            <span>Goal</span>
+            <strong id="goalText">1,200</strong>
           </div>
           <div>
             <span>Moves</span>
             <strong id="movesText">24</strong>
           </div>
+          <strong id="bestText" hidden>0</strong>
         </section>
 
         <section class="board-wrap">
@@ -82,13 +88,14 @@
       </aside>
     </div>
 
-    <script src="block-assets.js?v=20260521-4"></script>
-    <script src="character-assets.js?v=20260521-4"></script>
-    <script src="audio-assets.js?v=20260521-4"></script>
-    <script src="compat.js?v=20260521-4"></script>
-    <script src="game.js?v=20260521-4"></script>
-    <script src="speed-tuning.js?v=20260521-4"></script>
-    <script src="sound-effects.js?v=20260521-4"></script>
-    <script src="mobile-touch.js?v=20260521-4"></script>
+    <script src="block-assets.js?v=20260521-5"></script>
+    <script src="character-assets.js?v=20260521-5"></script>
+    <script src="audio-assets.js?v=20260521-5"></script>
+    <script src="compat.js?v=20260521-5"></script>
+    <script src="game.js?v=20260521-5"></script>
+    <script src="speed-tuning.js?v=20260521-5"></script>
+    <script src="stage-system.js?v=20260521-5"></script>
+    <script src="sound-effects.js?v=20260521-5"></script>
+    <script src="mobile-touch.js?v=20260521-5"></script>
   </body>
 </html>
