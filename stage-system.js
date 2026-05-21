@@ -172,9 +172,9 @@
     selectStage(nextIndex);
   }
 
-  function selectStage(nextIndex) {
+  function selectStage(nextIndex, force) {
     var normalized = Math.max(0, Math.min(STAGES.length - 1, Math.floor(Number(nextIndex))));
-    if (!isFinite(normalized) || (locked && !gameOver)) return;
+    if (!isFinite(normalized) || (!force && locked && !gameOver)) return;
 
     stageIndex = normalized;
     stageDef = STAGES[stageIndex];
@@ -416,6 +416,7 @@
 
   async function finishStageIfCleared() {
     if (score < stageDef.target) return false;
+    var isFinalStage = stageIndex >= STAGES.length - 1;
 
     if (score > best) {
       best = score;
@@ -427,20 +428,30 @@
     comboBadge.classList.remove("show");
     void comboBadge.offsetWidth;
     comboBadge.classList.add("show");
+    gameOver = true;
+    locked = true;
 
-    if (stageIndex >= STAGES.length - 1) {
-      gameOver = true;
-      locked = true;
-      setState("All Clear");
-      setCharacterMood("newBest");
-      render();
+    if (
+      window.ChainDropFlow &&
+      typeof window.ChainDropFlow.stageClear === "function" &&
+      window.ChainDropFlow.stageClear({
+        stageIndex: stageIndex,
+        stage: stageDef,
+        score: score,
+        final: isFinalStage,
+      })
+    ) {
       return true;
     }
 
-    locked = true;
-    setState("Stage Clear");
-    setCharacterMood("newBest", { duration: 900 });
+    setState(isFinalStage ? "All Clear" : "Stage Clear");
+    setCharacterMood("newBest");
     render();
+
+    if (isFinalStage) {
+      return true;
+    }
+
     await wait(900);
     stageIndex += 1;
     stageDef = STAGES[stageIndex];
@@ -457,7 +468,9 @@
 
   window.ChainDropStages = {
     stages: STAGES,
-    select: selectStage,
+    select: function (nextIndex) {
+      selectStage(nextIndex, true);
+    },
     current: function () {
       return stageIndex;
     },
