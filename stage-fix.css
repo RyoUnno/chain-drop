@@ -108,85 +108,151 @@
 
 .stage-select-list {
   display: grid;
-  align-content: start;
-  gap: 8px;
+  align-items: center;
+  justify-items: center;
   min-height: 0;
   overflow: auto;
-  padding-right: 2px;
+  padding: 2px;
 }
 
-.stage-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 62px;
-  padding: 10px;
+.stage-map {
+  position: relative;
+  width: min(100%, 360px);
+  max-height: 100%;
+  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.065);
-  color: var(--ink);
-  text-align: left;
-  cursor: pointer;
-  touch-action: manipulation;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0)),
+    #51bf88;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 16px 30px rgba(0, 0, 0, 0.24);
 }
 
-.stage-card:disabled {
-  color: rgba(246, 242, 232, 0.42);
-  cursor: default;
+.stage-map-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
-.stage-card:active:not(:disabled) {
-  transform: translateY(2px) scale(0.99);
+.stage-road-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
 }
 
-.stage-number {
+.stage-road-svg path {
+  fill: none;
+  stroke: rgba(91, 62, 38, 0.62);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 0.055 0.038;
+  filter: drop-shadow(0 2px 0 rgba(255, 247, 199, 0.55));
+}
+
+.stage-road-svg-unlocked path {
+  stroke: #ffe28a;
+  stroke-width: 7;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 3px 0 rgba(91, 62, 38, 0.32));
+}
+
+.map-stage-node {
+  position: absolute;
+  z-index: 2;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: #f6f2e8;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 3px solid #fff6d0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.9) 0 10%, transparent 11%),
+    linear-gradient(145deg, #ff5b6e 0%, #ff8a4c 58%, #ffd05b 100%);
   color: #151823;
-  font-weight: 900;
+  box-shadow:
+    inset 0 -6px 0 rgba(0, 0, 0, 0.14),
+    0 9px 0 rgba(91, 62, 38, 0.42),
+    0 18px 24px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  touch-action: manipulation;
+  transform: translate(-50%, -50%);
 }
 
-.stage-card:disabled .stage-number {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(246, 242, 232, 0.42);
+.map-stage-node.is-cleared {
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.9) 0 10%, transparent 11%),
+    linear-gradient(145deg, #3ecf8e 0%, #44c7ff 100%);
 }
 
-.stage-name {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
+.map-stage-node.is-locked {
+  border-color: rgba(255, 255, 255, 0.36);
+  background: linear-gradient(145deg, #777b89 0%, #4c5060 100%);
+  color: rgba(246, 242, 232, 0.55);
+  cursor: default;
+  box-shadow:
+    inset 0 -6px 0 rgba(0, 0, 0, 0.18),
+    0 8px 0 rgba(37, 40, 52, 0.7),
+    0 16px 22px rgba(0, 0, 0, 0.18);
 }
 
-.stage-name strong {
-  overflow: hidden;
-  font-size: 0.98rem;
-  line-height: 1.05;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.map-stage-node:active:not(:disabled) {
+  transform: translate(-50%, calc(-50% + 4px)) scale(0.96);
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.14),
+    0 5px 0 rgba(91, 62, 38, 0.42),
+    0 12px 20px rgba(0, 0, 0, 0.2);
 }
 
-.stage-name span,
-.stage-status {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 800;
+.map-stage-node:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 4px;
+}
+
+.map-marker-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.map-stage-number {
+  position: relative;
+  z-index: 1;
+  font-size: 1.1rem;
+  font-weight: 950;
   line-height: 1;
+}
+
+.map-stage-tag {
+  position: absolute;
+  left: 50%;
+  bottom: -24px;
+  max-width: 104px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(21, 24, 35, 0.82);
+  color: #fff6d0;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
   text-transform: uppercase;
-}
-
-.stage-card:disabled .stage-name span,
-.stage-card:disabled .stage-status {
-  color: rgba(184, 181, 199, 0.45);
-}
-
-.stage-status {
-  justify-self: end;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .flow-result {
@@ -213,13 +279,18 @@
     padding: 14px;
   }
 
-  .stage-card {
-    min-height: 54px;
-    padding: 8px;
+  .stage-map {
+    width: min(100%, 310px);
   }
 
-  .stage-number {
-    width: 32px;
-    height: 32px;
+  .map-stage-node {
+    width: 42px;
+    height: 42px;
+  }
+
+  .map-stage-tag {
+    bottom: -21px;
+    max-width: 86px;
+    font-size: 0.58rem;
   }
 }
