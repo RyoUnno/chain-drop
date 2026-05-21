@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Chain Drop</title>
-    <link rel="stylesheet" href="styles.css?v=20260521-8" />
-    <link rel="stylesheet" href="mobile-fix.css?v=20260521-8" />
-    <link rel="stylesheet" href="layout-fix.css?v=20260521-8" />
-    <link rel="stylesheet" href="stage-fix.css?v=20260521-8" />
+    <link rel="stylesheet" href="styles.css?v=20260521-9" />
+    <link rel="stylesheet" href="mobile-fix.css?v=20260521-9" />
+    <link rel="stylesheet" href="layout-fix.css?v=20260521-9" />
+    <link rel="stylesheet" href="stage-fix.css?v=20260521-9" />
   </head>
   <body>
     <div class="stage">
@@ -95,6 +95,15 @@
           </div>
           <button id="resultMenuButton" class="flow-primary" type="button">Stage Select</button>
         </section>
+
+        <section id="dramaScreen" class="flow-screen drama-screen" aria-label="story" hidden>
+          <div id="dramaCast" class="drama-cast" aria-hidden="true"></div>
+          <div class="drama-box" aria-live="polite">
+            <span id="dramaSpeaker" class="drama-speaker"></span>
+            <p id="dramaMessage" class="drama-message"></p>
+            <button id="dramaNextButton" class="flow-primary drama-next" type="button">Next</button>
+          </div>
+        </section>
       </main>
 
       <aside id="sidekick" class="sidekick" aria-live="polite" aria-label="sidekick">
@@ -105,17 +114,19 @@
       </aside>
     </div>
 
-    <script src="block-assets.js?v=20260521-8"></script>
-    <script src="character-assets.js?v=20260521-8"></script>
-    <script src="audio-assets.js?v=20260521-8"></script>
-    <script src="map-assets.js?v=20260521-8"></script>
-    <script src="compat.js?v=20260521-8"></script>
-    <script src="game.js?v=20260521-8"></script>
-    <script src="speed-tuning.js?v=20260521-8"></script>
-    <script src="stage-system.js?v=20260521-8"></script>
-    <script src="sound-effects.js?v=20260521-8"></script>
-    <script src="flow-system.js?v=20260521-8"></script>
-    <script src="map-stage-menu.js?v=20260521-8"></script>
-    <script src="mobile-touch.js?v=20260521-8"></script>
+    <script src="block-assets.js?v=20260521-9"></script>
+    <script src="character-assets.js?v=20260521-9"></script>
+    <script src="audio-assets.js?v=20260521-9"></script>
+    <script src="map-assets.js?v=20260521-9"></script>
+    <script src="drama-assets.js?v=20260521-9"></script>
+    <script src="compat.js?v=20260521-9"></script>
+    <script src="game.js?v=20260521-9"></script>
+    <script src="speed-tuning.js?v=20260521-9"></script>
+    <script src="stage-system.js?v=20260521-9"></script>
+    <script src="sound-effects.js?v=20260521-9"></script>
+    <script src="flow-system.js?v=20260521-9"></script>
+    <script src="drama-system.js?v=20260521-9"></script>
+    <script src="map-stage-menu.js?v=20260521-9"></script>
+    <script src="mobile-touch.js?v=20260521-9"></script>
   </body>
 </html>
