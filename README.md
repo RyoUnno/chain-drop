@@ -12,6 +12,9 @@
 ステージごとに目標スコア、手数、盤面の形が変わります。
 目標スコアに届くと次のステージへ進み、最後のステージをクリアすると `All Clear` になります。
 
+画面下の `Stage Select` から、好きなステージを選んで始められます。
+ステージを選び直すと、そのステージの最初から再スタートします。
+
 ステージを変更したい場合は、`index.html` で `game.js` より前に `window.CHAIN_DROP_STAGES` を定義します。
 
 例:
@@ -64,7 +67,7 @@ window.CHAIN_DROP_STAGES = [
 
 - `idle`: 通常
 - `cheer`: クリア、コンボ
-- `wow`: 大きいコンボ、シャッフル、ベスト更新
+- `wow`: 大きいコンボ、ベスト更新
 - `worry`: 残り手数が少ない、ゲーム終了
 - `sleep`: 一時停止
 
@@ -80,7 +83,6 @@ window.CHAIN_DROP_STAGES = [
 - `drop`: ブロックが落ちる音
 - `clearBlocks`: ブロックが消える音
 - `bomb`: ボムが爆発する音
-- `shuffle`: シャッフル音
 - `finish`: ゲーム終了音
 - `newBest`: ベスト更新音
 - `soundOn`: 音をオンにした音
