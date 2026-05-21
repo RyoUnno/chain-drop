@@ -463,6 +463,7 @@
   handleCellPress = async function (row, col) {
     if (locked || paused || !isPlayableCell(row, col)) return;
     await originalHandleCellPress(row, col);
+    if (gameOver) return;
     await finishStageIfCleared();
   };
 
