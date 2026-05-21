@@ -1,0 +1,7 @@
+.score-panel {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.score-panel strong {
+  font-size: 1.05rem;
+}
