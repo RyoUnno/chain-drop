@@ -51,6 +51,7 @@
   var stageDef = STAGES[stageIndex];
   var stageLabel = document.querySelector("#stageText");
   var goalLabel = document.querySelector("#goalText");
+  var stageSelect = document.querySelector("#stageSelect");
   var originalHandleCellPress = handleCellPress;
   var originalDrawBoard = drawBoard;
   var stageAnimationUntil = 0;
@@ -129,6 +130,69 @@
     return { row: ROWS - 1, col: 0 };
   }
 
+  function buildStageSelect() {
+    if (!stageSelect) return;
+
+    stageSelect.textContent = "";
+    for (var i = 0; i < STAGES.length; i += 1) {
+      var stage = STAGES[i];
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "stage-choice";
+      button.dataset.stageIndex = String(i);
+      button.textContent = String(i + 1);
+      button.title =
+        "Stage " +
+        (i + 1) +
+        " / " +
+        stage.name +
+        " / Goal " +
+        stage.target.toLocaleString("ja-JP");
+      button.setAttribute(
+        "aria-label",
+        "Stage " +
+          (i + 1) +
+          ", " +
+          stage.name +
+          ", goal " +
+          stage.target.toLocaleString("ja-JP") +
+          ", moves " +
+          stage.moves
+      );
+      button.addEventListener("click", handleStageChoice);
+      stageSelect.appendChild(button);
+    }
+
+    updateStageSelect();
+  }
+
+  function handleStageChoice(event) {
+    var target = event.currentTarget;
+    var nextIndex = Number(target && target.dataset ? target.dataset.stageIndex : NaN);
+    selectStage(nextIndex);
+  }
+
+  function selectStage(nextIndex) {
+    var normalized = Math.max(0, Math.min(STAGES.length - 1, Math.floor(Number(nextIndex))));
+    if (!isFinite(normalized) || (locked && !gameOver)) return;
+
+    stageIndex = normalized;
+    stageDef = STAGES[stageIndex];
+    startGame();
+    setState("Stage " + (stageIndex + 1));
+  }
+
+  function updateStageSelect() {
+    if (!stageSelect) return;
+
+    var buttons = stageSelect.querySelectorAll(".stage-choice");
+    for (var i = 0; i < buttons.length; i += 1) {
+      var active = i === stageIndex;
+      buttons[i].classList.toggle("is-active", active);
+      buttons[i].setAttribute("aria-pressed", active ? "true" : "false");
+    }
+  }
+
   function animateStageBoardFor(duration) {
     stageAnimationUntil = Math.max(stageAnimationUntil, stageNow() + duration);
     queueRender();
@@ -194,6 +258,7 @@
     updateStats();
     setState("Ready");
     setCharacterMood("idle");
+    updateStageSelect();
     render();
   };
 
@@ -202,7 +267,7 @@
     scoreText.textContent = score.toLocaleString("ja-JP");
     movesText.textContent = String(moves);
     if (bestText) bestText.textContent = Math.max(best, score).toLocaleString("ja-JP");
-    if (stageLabel) stageLabel.textContent = String(stageIndex + 1);
+    if (stageLabel) stageLabel.textContent = stageIndex + 1 + "/" + STAGES.length;
     if (goalLabel) goalLabel.textContent = stageDef.target.toLocaleString("ja-JP");
     chainText.textContent = (combo || chainPeak) + " Chain";
     chainMeter.style.width = Math.min((combo || chainPeak) * 18, 100) + "%";
@@ -390,5 +455,14 @@
     await finishStageIfCleared();
   };
 
+  window.ChainDropStages = {
+    stages: STAGES,
+    select: selectStage,
+    current: function () {
+      return stageIndex;
+    },
+  };
+
+  buildStageSelect();
   startGame();
 })();
