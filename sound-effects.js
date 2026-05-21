@@ -11,6 +11,7 @@
       tap: { src: "", volume: 0.45 },
       drop: { src: "", volume: 0.55 },
       clearBlocks: { src: "", volume: 0.75 },
+      bomb: { src: "", volume: 0.8 },
       shuffle: { src: "", volume: 0.7 },
       finish: { src: "", volume: 0.65 },
       newBest: { src: "", volume: 0.8 },
@@ -368,6 +369,12 @@
     tone(330, 0.08, { to: 520, type: "square", volume: 0.026, delay: 0.04 });
   }
 
+  function synthBomb() {
+    noise(0.2, { frequency: 420, volume: 0.055 });
+    tone(150, 0.16, { to: 75, type: "triangle", volume: 0.07 });
+    tone(520, 0.08, { to: 260, type: "square", volume: 0.032, delay: 0.04 });
+  }
+
   function synthFinish(newBest) {
     if (newBest) {
       tone(523, 0.11, { type: "triangle", volume: 0.055 });
@@ -453,8 +460,12 @@
     if (playable) {
       ensureAudio();
       preloadFiles();
-      playSfx("tap", synthTap);
-      playSfx("drop", synthDrop);
+      if (window.isChainDropBomb && window.isChainDropBomb(board[row][col])) {
+        playSfx("bomb", synthBomb);
+      } else {
+        playSfx("tap", synthTap);
+        playSfx("drop", synthDrop);
+      }
     }
     return originalHandleCellPress(row, col);
   };
