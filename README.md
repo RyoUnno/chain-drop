@@ -15,6 +15,25 @@
 ゲームは `タイトル -> ステージセレクト -> パズル -> クリア/失敗 -> ステージセレクト` の流れで進みます。
 最初はステージ1だけ遊べます。ステージをクリアすると次のステージが解放され、解放状況はブラウザに保存されます。
 
+ステージセレクト画面はマップ形式です。背景画像の差し替えやステージ位置の変更は `map-assets.js` で行います。
+
+```js
+window.CHAIN_DROP_STAGE_MAP = {
+  basePath: "assets/maps/",
+  background: "default-map.svg",
+  aspectRatio: "1 / 1.18",
+  markerImage: "",
+  clearedMarkerImage: "",
+  lockedMarkerImage: "",
+  nodes: [
+    { x: 18, y: 80 },
+    { x: 38, y: 66 },
+  ],
+};
+```
+
+`background` と各 `*MarkerImage` には PNG、WebP、SVG、JPEG を使えます。`nodes` の `x` と `y` はマップ左上を基準にしたパーセント指定です。
+
 ステージを変更したい場合は、`index.html` で `game.js` より前に `window.CHAIN_DROP_STAGES` を定義します。
 
 例:
