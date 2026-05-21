@@ -20,6 +20,10 @@ window.CHAIN_DROP_AUDIO = {
       src: "",
       volume: 0.75,
     },
+    bomb: {
+      src: "",
+      volume: 0.8,
+    },
     shuffle: {
       src: "",
       volume: 0.7,
