@@ -5,3 +5,74 @@
 .score-panel strong {
   font-size: 1.05rem;
 }
+
+.bottom-panel {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.stage-select {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.stage-select-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.stage-select-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
+  gap: 6px;
+}
+
+.stage-choice {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+.stage-choice:active {
+  transform: translateY(2px) scale(0.97);
+}
+
+.stage-choice.is-active {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: #f6f2e8;
+  color: #151823;
+}
+
+.stage-choice:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 2px;
+}
+
+@media (max-height: 710px) {
+  .stage-select {
+    gap: 5px;
+  }
+
+  .stage-choice {
+    height: 30px;
+  }
+}
