@@ -92,6 +92,38 @@ window.CHAIN_DROP_STAGES = [
 
 `states` では、ゲーム状態ごとにどの表情を使うかを割り当てます。縦長で頭身のある立ち絵も使えるように、画面左側に大きく `object-fit: contain` で表示します。
 
+## ドラマを差し替える
+
+ステージ開始前とステージクリア後の会話は `drama-assets.js` で設定します。
+立ち絵は `assets/characters/` に置き、`characters` に名前と画像を登録します。
+
+```js
+window.CHAIN_DROP_DRAMAS = {
+  basePath: "assets/characters/",
+  characters: {
+    hero: { name: "ヒーロー", image: "hero.png" },
+    rival: { name: "ライバル", image: "rival.png" },
+  },
+  stages: {
+    1: {
+      before: {
+        cast: ["hero", "rival"],
+        lines: [
+          { speaker: "hero", text: "ここが最初のステージだね。" },
+          { speaker: "rival", text: "油断しないでいこう。" },
+        ],
+      },
+      clear: [
+        { speaker: "hero", text: "クリア！ 次へ進もう。" },
+      ],
+    },
+  },
+};
+```
+
+`stages` の数字はステージ番号です。`before` がステージ開始前、`clear` がクリア後に再生されます。
+`cast` に表示したいキャラを並べ、各行の `speaker` に発言者のIDを指定します。発言していないキャラは自動で暗くグレーアウトします。
+
 ## 効果音を差し替える
 
 `assets/sounds/` に短い音声ファイルを置き、`audio-assets.js` の `sfx` を変更します。
