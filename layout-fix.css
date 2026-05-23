@@ -1,21 +1,21 @@
 @media (min-width: 641px) {
   .stage {
-    grid-template-columns: clamp(96px, 16vw, 142px) minmax(0, 430px);
-    justify-content: space-between;
-    width: min(100%, 800px);
-    gap: 12px;
+    grid-template-columns: clamp(112px, 14vw, 158px) minmax(0, 430px);
+    justify-content: center;
+    width: min(100%, 760px);
+    gap: clamp(14px, 2.4vw, 24px);
   }
 
   .game-shell {
     order: 2;
-    justify-self: end;
+    justify-self: stretch;
   }
 
   .sidekick {
     position: static;
     order: 1;
     align-self: stretch;
-    justify-items: start;
+    justify-items: end;
     width: auto;
     height: auto;
     padding: 18px 0 88px 0;
@@ -34,10 +34,10 @@
   }
 
   .sidekick-image {
-    width: min(100%, 150px);
+    width: min(100%, 158px);
     max-height: 100%;
     object-fit: contain;
-    object-position: left bottom;
+    object-position: center bottom;
   }
 
 }
