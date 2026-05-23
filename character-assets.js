@@ -18,11 +18,10 @@
     return basePath + src;
   }
 
-  function state(expression, line) {
+  function state(expression) {
     return {
       expression: expression,
       image: expressionImage(expression),
-      line: line,
     };
   }
 
@@ -32,16 +31,16 @@
     basePath: basePath,
     expressions: expressions,
     states: {
-      idle: state("idle", "Ready!"),
-      drop: state("idle", "Drop!"),
-      clear: state("cheer", "Nice!"),
-      combo: state("cheer", "Chain!"),
-      bigCombo: state("wow", "Huge!"),
-      lowMoves: state("worry", "Careful!"),
-      shuffle: state("wow", "Shuffle!"),
-      paused: state("sleep", "Pause"),
-      finish: state("worry", "Again?"),
-      newBest: state("wow", "Best!"),
+      idle: state("idle"),
+      drop: state("idle"),
+      clear: state("cheer"),
+      combo: state("cheer"),
+      bigCombo: state("wow"),
+      lowMoves: state("worry"),
+      shuffle: state("wow"),
+      paused: state("sleep"),
+      finish: state("worry"),
+      newBest: state("wow"),
     },
   };
 })();

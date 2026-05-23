@@ -163,7 +163,7 @@ button {
 
 .score-panel {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   padding: 9px;
 }
@@ -187,7 +187,7 @@ button {
 }
 
 .score-panel strong {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   line-height: 1;
 }
 
@@ -545,6 +545,7 @@ button {
 }
 
 .sidekick-card {
+  position: relative;
   display: grid;
   align-content: end;
   justify-items: center;
@@ -558,26 +559,11 @@ button {
 .sidekick-image {
   display: block;
   width: min(100%, 258px);
-  max-height: calc(100% - 54px);
+  max-height: 100%;
   object-fit: contain;
   object-position: center bottom;
   filter: drop-shadow(0 20px 22px rgba(0, 0, 0, 0.42));
   animation: sidekick-float 2600ms ease-in-out infinite;
-}
-
-.sidekick-line {
-  width: min(100%, 210px);
-  min-height: 32px;
-  margin: 0;
-  padding: 8px 9px;
-  border-radius: 8px;
-  background: #f6f2e8;
-  color: #151823;
-  font-size: 0.78rem;
-  font-weight: 850;
-  line-height: 1.1;
-  text-align: center;
-  word-break: break-word;
 }
 
 .sidekick[data-mood="drop"] .sidekick-card,
@@ -741,7 +727,7 @@ button {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 640px) {
   .stage {
     grid-template-columns: 1fr;
     width: min(100%, 430px);
@@ -776,9 +762,6 @@ button {
     max-height: 100%;
   }
 
-  .sidekick-line {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

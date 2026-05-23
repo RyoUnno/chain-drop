@@ -3,7 +3,57 @@ window.CHAIN_DROP_HAS_DIRECT_TAP = true;
 const ROWS = 9;
 const MOVES = 24;
 const GROUP_SIZE = 4;
+const VOID_CELL = "__chain_drop_void__";
+const TIMING = {
+  pickPop: 160,
+  fallSettle: 340,
+  clearBlink: 840,
+  shuffleSettle: 300,
+};
 const STORAGE_KEY = "chain-drop-best";
+const DEFAULT_STAGE_MASK = [
+  "111111",
+  "111111",
+  "111111",
+  "111111",
+  "111111",
+  "111111",
+  "111111",
+  "111111",
+  "111111",
+];
+const DEFAULT_STAGES = [
+  {
+    name: "Start",
+    target: 1200,
+    moves: 24,
+    mask: DEFAULT_STAGE_MASK,
+  },
+  {
+    name: "Notch",
+    target: 1800,
+    moves: 24,
+    mask: ["011110", "111111", "111111", "111111", "111111", "111111", "111111", "111111", "011110"],
+  },
+  {
+    name: "Hourglass",
+    target: 2400,
+    moves: 25,
+    mask: ["111111", "111111", "011110", "001100", "001100", "011110", "111111", "111111", "111111"],
+  },
+  {
+    name: "Pillars",
+    target: 3200,
+    moves: 26,
+    mask: ["110011", "111111", "111111", "011110", "011110", "111111", "111111", "111111", "110011"],
+  },
+  {
+    name: "Diamond",
+    target: 4200,
+    moves: 27,
+    mask: ["001100", "011110", "111111", "111111", "111111", "111111", "111111", "011110", "001100"],
+  },
+];
 const DEFAULT_BLOCKS = [
   { id: "red", label: "slash", image: "" },
   { id: "blue", label: "circle", image: "" },
@@ -23,20 +73,21 @@ const BLOCK_COLORS = {
 const BLOCKS = normalizeBlocks(window.CHAIN_DROP_BLOCKS);
 const BLOCK_BY_ID = indexBlocks(BLOCKS);
 const BLOCK_IDS = BLOCKS.map((block) => block.id);
+const STAGES = normalizeStages(window.CHAIN_DROP_STAGES);
 const DEFAULT_CHARACTER = {
   enabled: true,
   name: "Mimi",
   states: {
-    idle: { image: "assets/characters/idle.svg", line: "Ready!" },
-    drop: { image: "assets/characters/idle.svg", line: "Drop!" },
-    clear: { image: "assets/characters/cheer.svg", line: "Nice!" },
-    combo: { image: "assets/characters/cheer.svg", line: "Chain!" },
-    bigCombo: { image: "assets/characters/wow.svg", line: "Huge!" },
-    lowMoves: { image: "assets/characters/worry.svg", line: "Careful!" },
-    shuffle: { image: "assets/characters/wow.svg", line: "Shuffle!" },
-    paused: { image: "assets/characters/sleep.svg", line: "Pause" },
-    finish: { image: "assets/characters/worry.svg", line: "Again?" },
-    newBest: { image: "assets/characters/wow.svg", line: "Best!" },
+    idle: { image: "assets/characters/idle.jpg" },
+    drop: { image: "assets/characters/idle.jpg" },
+    clear: { image: "assets/characters/cheer.svg" },
+    combo: { image: "assets/characters/cheer.svg" },
+    bigCombo: { image: "assets/characters/wow.svg" },
+    lowMoves: { image: "assets/characters/worry.svg" },
+    shuffle: { image: "assets/characters/wow.svg" },
+    paused: { image: "assets/characters/sleep.svg" },
+    finish: { image: "assets/characters/worry.svg" },
+    newBest: { image: "assets/characters/wow.svg" },
   },
 };
 const CHARACTER = normalizeCharacter(window.CHAIN_DROP_CHARACTER);
@@ -48,6 +99,8 @@ const boardWrap = document.querySelector(".board-wrap");
 const scoreText = document.querySelector("#scoreText");
 const bestText = document.querySelector("#bestText");
 const movesText = document.querySelector("#movesText");
+const stageText = document.querySelector("#stageText");
+const goalText = document.querySelector("#goalText");
 const stateText = document.querySelector("#stateText");
 const chainText = document.querySelector("#chainText");
 const chainMeter = document.querySelector("#chainMeter");
@@ -57,11 +110,12 @@ const pauseButton = document.querySelector("#pauseButton");
 const shuffleButton = document.querySelector("#shuffleButton");
 const sidekickEl = document.querySelector("#sidekick");
 const sidekickImage = document.querySelector("#sidekickImage");
-const sidekickLine = document.querySelector("#sidekickLine");
 
 let board = [];
 let score = 0;
 let moves = MOVES;
+let currentStageIndex = 0;
+let currentStage = STAGES[currentStageIndex];
 let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
 let locked = false;
 let paused = false;
@@ -72,6 +126,7 @@ let renderQueued = false;
 let selectedCell = { row: ROWS - 1, col: 0 };
 let lastTouchTime = 0;
 let effects = new Map();
+let animationUntil = 0;
 let boardMetrics = {
   width: 0,
   height: 0,
@@ -84,6 +139,8 @@ let boardMetrics = {
 const imageCache = new Map();
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 const randomColor = () => BLOCK_IDS[Math.floor(Math.random() * BLOCK_IDS.length)];
+const now = () =>
+  window.performance && window.performance.now ? window.performance.now() : Date.now();
 
 function nextPaint() {
   return new Promise((resolve) => {
@@ -102,6 +159,12 @@ function commitBoardPaint() {
 async function settleBoardPaint() {
   queueRender();
   await nextPaint();
+}
+
+async function animateBoardFor(duration) {
+  animationUntil = Math.max(animationUntil, now() + duration);
+  queueRender();
+  await wait(duration);
 }
 
 function normalizeBlocks(customBlocks) {
@@ -127,6 +190,42 @@ function normalizeBlocks(customBlocks) {
   return blocks.length >= 4 ? blocks : DEFAULT_BLOCKS;
 }
 
+function normalizeStages(customStages) {
+  const source = Array.isArray(customStages) && customStages.length ? customStages : DEFAULT_STAGES;
+  const stages = source
+    .map((stage, index) => {
+      const fallback = DEFAULT_STAGES[index % DEFAULT_STAGES.length];
+      const mask = normalizeStageMask(stage && stage.mask, fallback.mask);
+      const target = Math.max(300, Number(stage && stage.target) || fallback.target || 1200);
+      const moves = Math.max(8, Number(stage && stage.moves) || fallback.moves || MOVES);
+      const name = String((stage && stage.name) || fallback.name || `Stage ${index + 1}`).trim();
+      return { name, target, moves, mask };
+    })
+    .filter((stage) => countPlayableCells(stage.mask) >= GROUP_SIZE);
+
+  return stages.length ? stages : DEFAULT_STAGES;
+}
+
+function normalizeStageMask(mask, fallbackMask) {
+  const source = Array.isArray(mask) ? mask : fallbackMask || DEFAULT_STAGE_MASK;
+  const normalized = [];
+
+  for (let row = 0; row < ROWS; row += 1) {
+    const line = String(source[row] || DEFAULT_STAGE_MASK[row] || "").padEnd(COLS, "1");
+    let normalizedLine = "";
+    for (let col = 0; col < COLS; col += 1) {
+      normalizedLine += line[col] === "0" ? "0" : "1";
+    }
+    normalized.push(normalizedLine);
+  }
+
+  return normalized;
+}
+
+function countPlayableCells(mask) {
+  return mask.reduce((count, row) => count + row.split("").filter((cell) => cell === "1").length, 0);
+}
+
 function indexBlocks(blocks) {
   const indexed = {};
   for (const block of blocks) {
@@ -147,7 +246,6 @@ function normalizeCharacter(customCharacter) {
     const state = customStates[key] && typeof customStates[key] === "object" ? customStates[key] : {};
     states[key] = {
       image: String(state.image || fallback.image || "").trim(),
-      line: String(state.line || fallback.line || key).trim(),
     };
   }
 
@@ -164,6 +262,47 @@ function getBlock(id) {
 
 function getBlockColor(id) {
   return BLOCK_COLORS[id] || "#9aa3b2";
+}
+
+function isVoidCell(value) {
+  return value === VOID_CELL;
+}
+
+function isPlayableCell(row, col) {
+  return (
+    row >= 0 &&
+    row < ROWS &&
+    col >= 0 &&
+    col < COLS &&
+    currentStage &&
+    currentStage.mask[row] &&
+    currentStage.mask[row][col] === "1"
+  );
+}
+
+function firstPlayableCell() {
+  for (let row = ROWS - 1; row >= 0; row -= 1) {
+    for (let col = 0; col < COLS; col += 1) {
+      if (isPlayableCell(row, col)) return { row, col };
+    }
+  }
+  return { row: ROWS - 1, col: 0 };
+}
+
+function moveSelection(deltaRow, deltaCol) {
+  let row = selectedCell.row;
+  let col = selectedCell.col;
+
+  for (let step = 0; step < Math.max(ROWS, COLS); step += 1) {
+    row = Math.min(ROWS - 1, Math.max(0, row + deltaRow));
+    col = Math.min(COLS - 1, Math.max(0, col + deltaCol));
+    if (isPlayableCell(row, col)) {
+      selectedCell = { row, col };
+      return;
+    }
+  }
+
+  selectedCell = firstPlayableCell();
 }
 
 function init() {
@@ -221,16 +360,18 @@ function bindBoardInput() {
 
 function handleBoardKey(event) {
   if (event.key === "ArrowUp") {
-    selectedCell.row = Math.max(0, selectedCell.row - 1);
+    moveSelection(-1, 0);
   } else if (event.key === "ArrowDown") {
-    selectedCell.row = Math.min(ROWS - 1, selectedCell.row + 1);
+    moveSelection(1, 0);
   } else if (event.key === "ArrowLeft") {
-    selectedCell.col = Math.max(0, selectedCell.col - 1);
+    moveSelection(0, -1);
   } else if (event.key === "ArrowRight") {
-    selectedCell.col = Math.min(COLS - 1, selectedCell.col + 1);
+    moveSelection(0, 1);
   } else if (event.key === "Enter" || event.key === " ") {
     event.preventDefault();
-    handleCellPress(selectedCell.row, selectedCell.col);
+    if (isPlayableCell(selectedCell.row, selectedCell.col)) {
+      handleCellPress(selectedCell.row, selectedCell.col);
+    }
     return;
   } else {
     return;
@@ -256,14 +397,15 @@ function cellFromPoint(clientX, clientY) {
   const y = clientY - rect.top;
   if (x < 0 || y < 0 || x > rect.width || y > rect.height) return null;
 
-  return {
-    row: Math.min(ROWS - 1, Math.max(0, Math.floor((y / rect.height) * ROWS))),
-    col: Math.min(COLS - 1, Math.max(0, Math.floor((x / rect.width) * COLS))),
-  };
+  const row = Math.min(ROWS - 1, Math.max(0, Math.floor((y / rect.height) * ROWS)));
+  const col = Math.min(COLS - 1, Math.max(0, Math.floor((x / rect.width) * COLS)));
+  if (!isPlayableCell(row, col)) return null;
+
+  return { row, col };
 }
 
 function setupCharacter() {
-  if (!sidekickEl || !sidekickImage || !sidekickLine || !CHARACTER.enabled) {
+  if (!sidekickEl || !sidekickImage || !CHARACTER.enabled) {
     if (sidekickEl) sidekickEl.hidden = true;
     return;
   }
@@ -273,14 +415,13 @@ function setupCharacter() {
 }
 
 function setCharacterMood(mood, options = {}) {
-  if (!sidekickEl || !sidekickImage || !sidekickLine || !CHARACTER.enabled) return;
+  if (!sidekickEl || !sidekickImage || !CHARACTER.enabled) return;
 
   window.clearTimeout(characterTimer);
   const state = CHARACTER.states[mood] || CHARACTER.states.idle;
   sidekickEl.dataset.mood = mood;
   sidekickImage.src = state.image;
-  sidekickImage.alt = `${CHARACTER.name}: ${state.line}`;
-  sidekickLine.textContent = state.line;
+  sidekickImage.alt = CHARACTER.name;
 
   if (options.duration) {
     characterTimer = window.setTimeout(() => {
@@ -340,13 +481,16 @@ function syncCanvasSize() {
 }
 
 function startGame() {
+  currentStage = STAGES[currentStageIndex];
   score = 0;
-  moves = MOVES;
+  moves = currentStage.moves;
   locked = false;
   paused = false;
   gameOver = false;
   chainPeak = 0;
+  selectedCell = firstPlayableCell();
   effects.clear();
+  animationUntil = 0;
   board = makeFreshBoard();
   updatePauseButton();
   updateStats();
@@ -359,8 +503,8 @@ function makeFreshBoard() {
   let next = [];
 
   do {
-    next = Array.from({ length: ROWS }, () =>
-      Array.from({ length: COLS }, () => randomColor())
+    next = Array.from({ length: ROWS }, (_, row) =>
+      Array.from({ length: COLS }, (_, col) => (isPlayableCell(row, col) ? randomColor() : VOID_CELL))
     );
   } while (findGroups(next).length > 0);
 
@@ -368,7 +512,9 @@ function makeFreshBoard() {
 }
 
 async function handleCellPress(row, col) {
-  if (locked || paused || gameOver || !board[row][col]) return;
+  if (locked || paused || gameOver || !isPlayableCell(row, col) || !board[row][col] || isVoidCell(board[row][col])) {
+    return;
+  }
 
   locked = true;
   try {
@@ -383,10 +529,14 @@ async function handleCellPress(row, col) {
     vibrate(12);
     commitBoardPaint();
 
-    await wait(90);
+    await wait(TIMING.pickPop);
     render();
     await settleBoardPaint();
     await resolveBoard();
+
+    if (await finishStageIfCleared()) {
+      return;
+    }
 
     if (moves <= 0) {
       endGame();
@@ -428,9 +578,7 @@ async function resolveBoard() {
     });
     markGroups(clearedCells);
     vibrate(combo > 1 ? [16, 25, 20] : 18);
-    await settleBoardPaint();
-
-    await wait(180);
+    await animateBoardFor(TIMING.clearBlink);
     for (const { row, col } of clearedCells) {
       board[row][col] = null;
     }
@@ -455,26 +603,37 @@ function flattenGroups(groups) {
 
 async function collapseAndFill() {
   let moved = false;
-  const next = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  const next = Array.from({ length: ROWS }, (_, row) =>
+    Array.from({ length: COLS }, (_, col) => (isPlayableCell(row, col) ? null : VOID_CELL))
+  );
 
   for (let col = 0; col < COLS; col += 1) {
     const stack = [];
 
     for (let row = ROWS - 1; row >= 0; row -= 1) {
-      if (board[row][col]) {
+      if (isPlayableCell(row, col) && board[row][col] && !isVoidCell(board[row][col])) {
         stack.push(board[row][col]);
       }
     }
 
-    let targetRow = ROWS - 1;
-    for (const color of stack) {
-      next[targetRow][col] = color;
-      targetRow -= 1;
+    const targetRows = [];
+    for (let row = ROWS - 1; row >= 0; row -= 1) {
+      if (isPlayableCell(row, col)) {
+        targetRows.push(row);
+      }
     }
 
-    while (targetRow >= 0) {
+    let targetIndex = 0;
+    for (const color of stack) {
+      const targetRow = targetRows[targetIndex];
+      next[targetRow][col] = color;
+      targetIndex += 1;
+    }
+
+    while (targetIndex < targetRows.length) {
+      const targetRow = targetRows[targetIndex];
       next[targetRow][col] = randomColor();
-      targetRow -= 1;
+      targetIndex += 1;
       moved = true;
     }
   }
@@ -492,7 +651,7 @@ async function collapseAndFill() {
   await settleBoardPaint();
 
   if (moved) {
-    await wait(90);
+    await wait(TIMING.fallSettle);
     clearTransientClasses();
     await settleBoardPaint();
   }
@@ -507,7 +666,7 @@ function findGroups(sourceBoard) {
   for (let row = 0; row < ROWS; row += 1) {
     for (let col = 0; col < COLS; col += 1) {
       const color = sourceBoard[row][col];
-      if (!color || visited[row][col]) continue;
+      if (!isPlayableCell(row, col) || !color || isVoidCell(color) || visited[row][col]) continue;
 
       const group = [];
       const queue = [{ row, col }];
@@ -518,7 +677,12 @@ function findGroups(sourceBoard) {
         group.push(current);
 
         for (const next of neighbors(current.row, current.col)) {
-          if (visited[next.row][next.col] || sourceBoard[next.row][next.col] !== color) {
+          if (
+            visited[next.row][next.col] ||
+            !isPlayableCell(next.row, next.col) ||
+            isVoidCell(sourceBoard[next.row][next.col]) ||
+            sourceBoard[next.row][next.col] !== color
+          ) {
             continue;
           }
           visited[next.row][next.col] = true;
@@ -570,6 +734,7 @@ function queueRender() {
 
 function drawBoard() {
   renderQueued = false;
+  const frameTime = now();
   syncCanvasSizeIfNeeded();
   const { width, height, dpr, cellWidth, cellHeight, gap } = boardMetrics;
   if (!width || !height) return;
@@ -581,18 +746,26 @@ function drawBoard() {
     for (let col = 0; col < COLS; col += 1) {
       const x = col * (cellWidth + gap);
       const y = row * (cellHeight + gap);
+      if (!isPlayableCell(row, col)) {
+        drawVoidCell(x, y, cellWidth, cellHeight);
+        continue;
+      }
       drawCell(x, y, cellWidth, cellHeight);
 
       const color = board[row][col];
-      if (color) {
+      if (color && !isVoidCell(color)) {
         const effect = effects.get(cellKey(row, col));
-        drawBlock(row, col, x, y, cellWidth, cellHeight, color, effect);
+        drawBlock(row, col, x, y, cellWidth, cellHeight, color, effect, frameTime);
       }
     }
   }
 
   if (document.activeElement === boardEl) {
     drawSelectedCell();
+  }
+
+  if (animationUntil > frameTime) {
+    queueRender();
   }
 }
 
@@ -613,18 +786,35 @@ function drawCell(x, y, width, height) {
   boardCtx.restore();
 }
 
-function drawBlock(row, col, x, y, width, height, color, effect) {
+function drawVoidCell(x, y, width, height) {
+  boardCtx.save();
+  boardCtx.fillStyle = "rgba(2, 4, 9, 0.34)";
+  roundedRect(boardCtx, x, y, width, height, 8);
+  boardCtx.fill();
+  boardCtx.restore();
+}
+
+function drawBlock(row, col, x, y, width, height, color, effect, frameTime) {
   const block = getBlock(color);
   const size = Math.min(width, height) * 0.84;
   const centerX = x + width / 2;
   let centerY = y + height / 2;
   let scale = 1;
   let alpha = 1;
+  const type = getEffectType(effect);
 
-  if (effect === "pop" || effect === "clear") {
-    scale = effect === "clear" ? 1.12 : 1.04;
-    alpha = effect === "clear" ? 0.45 : 0.75;
-  } else if (effect === "drop") {
+  if (type === "clear") {
+    const age = Math.max(0, frameTime - getEffectStart(effect, frameTime));
+    const duration = getEffectDuration(effect, TIMING.clearBlink);
+    const progress = Math.min(age / duration, 1);
+    const flashOn = Math.floor(age / 120) % 2 === 0;
+    const fade = 1 - Math.max(0, progress - 0.78) / 0.22;
+    scale = 1.04 + (flashOn ? 0.08 : 0);
+    alpha = (flashOn ? 1 : 0.32) * Math.max(0.34, fade);
+  } else if (type === "pop") {
+    scale = 1.04;
+    alpha = 0.75;
+  } else if (type === "drop") {
     centerY += size * 0.04;
   }
 
@@ -632,6 +822,10 @@ function drawBlock(row, col, x, y, width, height, color, effect) {
   boardCtx.globalAlpha = alpha;
   boardCtx.translate(centerX, centerY);
   boardCtx.scale(scale, scale);
+
+  if (type === "clear") {
+    drawClearPulse(size, frameTime, effect);
+  }
 
   if (block.image) {
     const image = getBlockImage(block);
@@ -643,6 +837,39 @@ function drawBlock(row, col, x, y, width, height, color, effect) {
   }
 
   drawBuiltInBlock(color, block.label, size);
+  boardCtx.restore();
+}
+
+function getEffectType(effect) {
+  if (!effect) return "";
+  return typeof effect === "string" ? effect : effect.type || "";
+}
+
+function getEffectStart(effect, fallback) {
+  return effect && typeof effect === "object" && Number.isFinite(effect.startedAt)
+    ? effect.startedAt
+    : fallback;
+}
+
+function getEffectDuration(effect, fallback) {
+  return effect && typeof effect === "object" && Number.isFinite(effect.duration)
+    ? effect.duration
+    : fallback;
+}
+
+function drawClearPulse(size, frameTime, effect) {
+  const age = Math.max(0, frameTime - getEffectStart(effect, frameTime));
+  const duration = getEffectDuration(effect, TIMING.clearBlink);
+  const progress = Math.min(age / duration, 1);
+  const pulse = 0.5 + Math.sin(progress * Math.PI * 8) * 0.5;
+
+  boardCtx.save();
+  boardCtx.globalAlpha = 0.32 + pulse * 0.36;
+  boardCtx.strokeStyle = "#fff6d0";
+  boardCtx.lineWidth = Math.max(2, size * 0.08);
+  boardCtx.beginPath();
+  boardCtx.ellipse(0, 0, size * 0.5, size * 0.48, -0.08, 0, Math.PI * 2);
+  boardCtx.stroke();
   boardCtx.restore();
 }
 
@@ -748,6 +975,7 @@ function getBlockImage(block) {
 }
 
 function drawSelectedCell() {
+  if (!isPlayableCell(selectedCell.row, selectedCell.col)) return;
   const { cellWidth, cellHeight, gap } = boardMetrics;
   const x = selectedCell.col * (cellWidth + gap);
   const y = selectedCell.row * (cellHeight + gap);
@@ -777,8 +1005,13 @@ function roundedRect(ctx, x, y, width, height, radius) {
 
 function markGroups(groupCells) {
   clearTransientClasses();
+  const startedAt = now();
   for (const { row, col } of groupCells) {
-    effects.set(cellKey(row, col), "clear");
+    effects.set(cellKey(row, col), {
+      type: "clear",
+      startedAt,
+      duration: TIMING.clearBlink,
+    });
   }
   queueRender();
 }
@@ -806,8 +1039,44 @@ function updateStats(activeCombo = 0) {
   scoreText.textContent = score.toLocaleString("ja-JP");
   movesText.textContent = String(moves);
   bestText.textContent = Math.max(best, score).toLocaleString("ja-JP");
+  if (stageText) stageText.textContent = String(currentStageIndex + 1);
+  if (goalText) goalText.textContent = currentStage.target.toLocaleString("ja-JP");
   chainText.textContent = `${activeCombo || chainPeak} Chain`;
   chainMeter.style.width = `${Math.min((activeCombo || chainPeak) * 18, 100)}%`;
+}
+
+async function finishStageIfCleared() {
+  if (score < currentStage.target) return false;
+
+  if (score > best) {
+    best = score;
+    localStorage.setItem(STORAGE_KEY, String(best));
+  }
+
+  updateStats(0);
+  comboBadge.textContent = `Stage ${currentStageIndex + 1} Clear`;
+  comboBadge.classList.remove("show");
+  void comboBadge.offsetWidth;
+  comboBadge.classList.add("show");
+
+  if (currentStageIndex >= STAGES.length - 1) {
+    gameOver = true;
+    locked = true;
+    setState("All Clear");
+    setCharacterMood("newBest");
+    render();
+    return true;
+  }
+
+  locked = true;
+  setState("Stage Clear");
+  setCharacterMood("newBest", { duration: 900 });
+  render();
+  await wait(900);
+  currentStageIndex += 1;
+  startGame();
+  setState(`Stage ${currentStageIndex + 1}`);
+  return true;
 }
 
 function showCombo(combo, points) {
@@ -879,7 +1148,7 @@ async function shuffleBoard() {
   await settleBoardPaint();
   updateStats(0);
   vibrate(18);
-  await wait(100);
+  await wait(TIMING.shuffleSettle);
   clearTransientClasses();
 
   if (moves <= 0) {

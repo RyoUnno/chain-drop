@@ -36,12 +36,6 @@
   max-height: 100%;
 }
 
-.sidekick-line {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-}
-
 @media (max-height: 710px) {
   .drama-character {
     max-width: 178px;
