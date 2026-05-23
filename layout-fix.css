@@ -18,7 +18,7 @@
     justify-items: end;
     width: auto;
     height: auto;
-    padding: 18px 0 88px 0;
+    padding: 18px 0 clamp(124px, 17vh, 154px) 0;
   }
 
   .sidekick-card {
@@ -45,8 +45,9 @@
 @media (max-width: 640px) {
   .sidekick {
     left: -10px;
+    bottom: clamp(104px, 16svh, 132px);
     width: clamp(64px, 20vw, 96px);
-    height: min(44svh, 300px);
+    height: min(39svh, 270px);
   }
 
   .sidekick-image {
