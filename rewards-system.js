@@ -266,7 +266,9 @@
         var ids = window.CHAIN_DROP_LINE_CLEAR_IDS || {};
         if (!locked && !paused && !gameOver && value) {
           if (window.isChainDropBomb && window.isChainDropBomb(value)) stats.bombsUsed += 1;
-          if (value === ids.row || value === ids.col) stats.lineClearsUsed += 1;
+          if ((window.isChainDropLineClear && window.isChainDropLineClear(value)) || value === ids.row || value === ids.col) {
+            stats.lineClearsUsed += 1;
+          }
         }
       } catch (error) {
         // Input still works even if tracking misses a tap.

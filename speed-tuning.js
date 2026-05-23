@@ -8,12 +8,34 @@
   var VOID_CELL = "__chain_drop_void__";
   var ROW_CLEAR_ID = "__chain_drop_row_clear__";
   var COL_CLEAR_ID = "__chain_drop_col_clear__";
+  var CROSS_CLEAR_ID = "__chain_drop_cross_clear__";
+  var BIG_BOMB_ID = "__chain_drop_big_bomb__";
+  var DIAGONAL_CLEAR_ID = "__chain_drop_diagonal_clear__";
+  var COLOR_CLEAR_ID = "__chain_drop_color_clear__";
+  var PLUS_CLEAR_ID = "__chain_drop_plus_clear__";
+  var CHECKER_CLEAR_ID = "__chain_drop_checker_clear__";
+  var RING_CLEAR_ID = "__chain_drop_ring_clear__";
   var BOMB_MIN_GROUP = 5;
   var LINE_MIN_GROUP = 5;
   var BOMB_ANIMATION = 560;
   var LINE_ANIMATION = 620;
   var BOMB_SCORE_BONUS = 120;
   var LINE_SCORE_BONUS = 160;
+  var POWER_ANIMATION = 660;
+  var POWERUP_DEFS = [
+    { id: BOMB_ID, kind: "bomb", label: "Bomb", symbol: "!", from: "#ffe89a", to: "#7c5cff", stat: "bomb", score: 120, cellScore: 40, animation: BOMB_ANIMATION },
+    { id: ROW_CLEAR_ID, kind: "row", label: "Row", symbol: "->", from: "#0096c7", to: "#55d6ff", stat: "line", score: 160, cellScore: 45, animation: LINE_ANIMATION },
+    { id: COL_CLEAR_ID, kind: "col", label: "Column", symbol: "|", from: "#ffb000", to: "#ffe28a", stat: "line", score: 160, cellScore: 45, animation: LINE_ANIMATION },
+    { id: CROSS_CLEAR_ID, kind: "cross", label: "Cross", symbol: "+", from: "#ff6f91", to: "#55c7ff", stat: "line", score: 220, cellScore: 44, animation: POWER_ANIMATION },
+    { id: BIG_BOMB_ID, kind: "bigBomb", label: "Big Bomb", symbol: "!!", from: "#ff5b6e", to: "#ffd65e", stat: "bomb", score: 260, cellScore: 38, animation: POWER_ANIMATION },
+    { id: DIAGONAL_CLEAR_ID, kind: "diagonal", label: "Diagonal", symbol: "X", from: "#8f7cff", to: "#55c7ff", stat: "line", score: 220, cellScore: 42, animation: POWER_ANIMATION },
+    { id: COLOR_CLEAR_ID, kind: "color", label: "Color", symbol: "C", from: "#39d98a", to: "#fff176", stat: "bomb", score: 240, cellScore: 34, animation: POWER_ANIMATION },
+    { id: PLUS_CLEAR_ID, kind: "plus", label: "Plus", symbol: "+", from: "#56b4e9", to: "#f0e442", stat: "bomb", score: 190, cellScore: 44, animation: POWER_ANIMATION },
+    { id: CHECKER_CLEAR_ID, kind: "checker", label: "Checker", symbol: "#", from: "#f28e2b", to: "#cc79a7", stat: "bomb", score: 230, cellScore: 30, animation: POWER_ANIMATION },
+    { id: RING_CLEAR_ID, kind: "ring", label: "Ring", symbol: "O", from: "#43c9a2", to: "#0072b2", stat: "bomb", score: 210, cellScore: 40, animation: POWER_ANIMATION },
+  ];
+  var POWERUP_BY_ID = indexPowerups(POWERUP_DEFS);
+  var REWARD_VARIANTS = [BOMB_ID, PLUS_CLEAR_ID, CROSS_CLEAR_ID, BIG_BOMB_ID, DIAGONAL_CLEAR_ID, COLOR_CLEAR_ID, CHECKER_CLEAR_ID, RING_CLEAR_ID];
   var DEFAULT_STAGE_MASK = [
     "111111",
     "111111",
@@ -26,30 +48,40 @@
     "111111",
   ];
   var DEFAULT_STAGES = [
-    { name: "Start", target: 1200, moves: 24, mask: DEFAULT_STAGE_MASK },
+    {
+      name: "Start",
+      target: 1200,
+      moves: 24,
+      mask: DEFAULT_STAGE_MASK,
+      mission: { type: "chain", value: 2, text: "2 Chain以上を出す" },
+    },
     {
       name: "Notch",
       target: 1800,
       moves: 24,
       mask: ["011110", "111111", "111111", "111111", "111111", "111111", "111111", "111111", "011110"],
+      mission: { type: "line", value: 1, text: "ラインブロックを1回使う" },
     },
     {
       name: "Hourglass",
       target: 2400,
       moves: 25,
       mask: ["111111", "111111", "011110", "001100", "001100", "011110", "111111", "111111", "111111"],
+      mission: { type: "chain", value: 3, text: "3 Chain以上を出す" },
     },
     {
       name: "Pillars",
       target: 3200,
       moves: 26,
       mask: ["110011", "111111", "111111", "011110", "011110", "111111", "111111", "111111", "110011"],
+      mission: { type: "bomb", value: 1, text: "ボムを1回使う" },
     },
     {
       name: "Diamond",
       target: 4200,
       moves: 27,
       mask: ["001100", "011110", "111111", "111111", "111111", "111111", "111111", "011110", "001100"],
+      mission: { type: "chain", value: 4, text: "4 Chain以上を出す" },
     },
   ];
   var STAGES = normalizeStages(window.CHAIN_DROP_STAGES);
@@ -57,15 +89,29 @@
   var stageDef = STAGES[stageIndex];
   var stageLabel = document.querySelector("#stageText");
   var goalLabel = document.querySelector("#goalText");
+  var missionText = document.querySelector("#missionText");
   var stageSelect = document.querySelector("#stageSelect");
+  var runStats = null;
 
   var speedAnimationUntil = 0;
   var originalDrawBoard = drawBoard;
   var originalDrawBlock = drawBlock;
 
   window.CHAIN_DROP_BOMB_ID = BOMB_ID;
-  window.isChainDropBomb = isBombBlock;
+  window.isChainDropBomb = isBombPowerup;
+  window.isChainDropLineClear = isLinePowerup;
   window.CHAIN_DROP_LINE_CLEAR_IDS = { row: ROW_CLEAR_ID, col: COL_CLEAR_ID };
+  window.CHAIN_DROP_POWERUPS = POWERUP_DEFS.map(function (powerup) {
+    return {
+      id: powerup.id,
+      kind: powerup.kind,
+      label: powerup.label,
+      stat: powerup.stat,
+    };
+  });
+  window.CHAIN_DROP_POWERUP_IDS = POWERUP_DEFS.map(function (powerup) {
+    return powerup.id;
+  });
   window.CHAIN_DROP_STAGE_ENABLED = true;
 
   function speedNow() {
@@ -85,12 +131,43 @@
         moves: Math.max(8, Number(stage.moves) || fallback.moves || MOVES),
         mask: normalizeStageMask(stage.mask, fallback.mask),
       };
+      normalized.mission = normalizeMission(stage.mission, fallback.mission);
+      normalized.starScore = Math.max(
+        normalized.target,
+        Math.floor(Number(stage.starScore) || normalized.target * (Number(stage.starScoreMultiplier) || 1.25))
+      );
+      normalized.starMoves = Math.max(1, Math.ceil(Number(stage.starMoves) || normalized.moves * 0.2));
       if (countPlayableCells(normalized.mask) >= GROUP_SIZE) {
         stages.push(normalized);
       }
     }
 
     return stages.length ? stages : DEFAULT_STAGES;
+  }
+
+  function normalizeMission(mission, fallbackMission) {
+    var fallback = fallbackMission && typeof fallbackMission === "object" ? fallbackMission : {};
+    var source = mission && typeof mission === "object" ? mission : fallback;
+    var type = String(source.type || source.kind || fallback.type || "chain").trim();
+    var value = Math.max(1, Math.floor(Number(source.value || source.count || source.target || fallback.value) || 2));
+
+    if (["chain", "line", "bomb", "score", "moves"].indexOf(type) === -1) {
+      type = "chain";
+    }
+
+    return {
+      type: type,
+      value: value,
+      text: String(source.text || source.label || defaultMissionText(type, value)).trim(),
+    };
+  }
+
+  function defaultMissionText(type, value) {
+    if (type === "line") return "ラインブロックを" + value + "回使う";
+    if (type === "bomb") return "ボムを" + value + "回使う";
+    if (type === "score") return value.toLocaleString("ja-JP") + "点以上を取る";
+    if (type === "moves") return "残り" + value + "手以上でクリア";
+    return value + " Chain以上を出す";
   }
 
   function normalizeStageMask(mask, fallbackMask) {
@@ -151,6 +228,134 @@
       }
     }
     return { row: ROWS - 1, col: 0 };
+  }
+
+  function createRunStats(stage) {
+    return {
+      maxChain: 0,
+      bombsUsed: 0,
+      lineClearsUsed: 0,
+      score: 0,
+      movesLeft: stage ? stage.moves : moves,
+      movesStarted: stage ? stage.moves : moves,
+    };
+  }
+
+  function syncRunStats() {
+    if (!runStats) runStats = createRunStats(stageDef);
+    runStats.maxChain = Math.max(runStats.maxChain, chainPeak || 0);
+    runStats.score = score;
+    runStats.movesLeft = moves;
+    return runStats;
+  }
+
+  function missionProgressValue(mission) {
+    var stats = syncRunStats();
+    if (!mission) return 0;
+    if (mission.type === "line") return stats.lineClearsUsed;
+    if (mission.type === "bomb") return stats.bombsUsed;
+    if (mission.type === "score") return stats.score;
+    if (mission.type === "moves") return stats.movesLeft;
+    return stats.maxChain;
+  }
+
+  function missionCleared(mission) {
+    return missionProgressValue(mission) >= mission.value;
+  }
+
+  function missionProgressText(mission) {
+    if (!mission) return "";
+    var progress = Math.min(missionProgressValue(mission), mission.value);
+    if (missionCleared(mission)) return mission.text + " 達成";
+    if (mission.type === "score") {
+      return mission.text + " " + progress.toLocaleString("ja-JP") + "/" + mission.value.toLocaleString("ja-JP");
+    }
+    return mission.text + " " + progress + "/" + mission.value;
+  }
+
+  function calculateStars(clear, missionDone) {
+    if (!clear) return 0;
+    syncRunStats();
+    var stars = 1;
+    if (missionDone) stars += 1;
+    if (score >= stageDef.starScore) stars += 1;
+    return Math.max(1, Math.min(3, stars));
+  }
+
+  function buildStarBonusText(stars) {
+    if (stars >= 3) return "3つ星達成";
+    return (
+      "3つ星条件: " +
+      stageDef.starScore.toLocaleString("ja-JP") +
+      "点以上"
+    );
+  }
+
+  function scoreCleared() {
+    return score >= stageDef.target;
+  }
+
+  function buildScoreFailureText() {
+    return (
+      "スコア未達: " +
+      score.toLocaleString("ja-JP") +
+      "/" +
+      stageDef.target.toLocaleString("ja-JP") +
+      "点"
+    );
+  }
+
+  function buildMissionFailureText(mission) {
+    if (!mission) return "ミッション未達";
+    return "ミッション未達: " + missionProgressText(mission);
+  }
+
+  function buildFailureReasons(scoreDone, missionDone, mission) {
+    var reasons = [];
+    if (!scoreDone) reasons.push({ type: "score", text: buildScoreFailureText() });
+    if (!missionDone) reasons.push({ type: "mission", text: buildMissionFailureText(mission) });
+    return reasons;
+  }
+
+  function buildStageResultDetail(clear, final) {
+    var mission = stageDef.mission;
+    var missionDone = missionCleared(mission);
+    var scoreDone = scoreCleared();
+    var failureReasons = clear ? [] : buildFailureReasons(scoreDone, missionDone, mission);
+    var stars = calculateStars(clear, missionDone);
+    var stats = syncRunStats();
+
+    return {
+      stageIndex: stageIndex,
+      stage: stageDef,
+      score: score,
+      moves: moves,
+      chainPeak: chainPeak,
+      final: Boolean(final),
+      clear: Boolean(clear),
+      stars: stars,
+      mission: mission,
+      scoreCleared: scoreDone,
+      missionCleared: missionDone,
+      missionText: missionProgressText(mission),
+      scoreFailureText: scoreDone ? "" : buildScoreFailureText(),
+      missionFailureText: missionDone ? "" : buildMissionFailureText(mission),
+      failureReasons: failureReasons,
+      failureSummary: failureReasons
+        .map(function (reason) {
+          return reason.text;
+        })
+        .join(" / "),
+      starBonusText: buildStarBonusText(stars),
+      stats: {
+        maxChain: stats.maxChain,
+        bombsUsed: stats.bombsUsed,
+        lineClearsUsed: stats.lineClearsUsed,
+        score: stats.score,
+        movesLeft: stats.movesLeft,
+        movesStarted: stats.movesStarted,
+      },
+    };
   }
 
   function buildStageSelect() {
@@ -216,8 +421,30 @@
     }
   }
 
+  function indexPowerups(defs) {
+    var indexed = {};
+    for (var i = 0; i < defs.length; i += 1) {
+      indexed[defs[i].id] = defs[i];
+    }
+    return indexed;
+  }
+
+  function powerupDef(value) {
+    return POWERUP_BY_ID[value] || null;
+  }
+
   function isBombBlock(value) {
     return value === BOMB_ID;
+  }
+
+  function isBombPowerup(value) {
+    var powerup = powerupDef(value);
+    return Boolean(powerup && powerup.stat === "bomb");
+  }
+
+  function isLinePowerup(value) {
+    var powerup = powerupDef(value);
+    return Boolean(powerup && powerup.stat === "line");
   }
 
   function isLineClearBlock(value) {
@@ -225,7 +452,7 @@
   }
 
   function isSpecialBlock(value) {
-    return isBombBlock(value) || isLineClearBlock(value);
+    return Boolean(powerupDef(value));
   }
 
   function effectType(effect) {
@@ -387,6 +614,7 @@
     paused = false;
     gameOver = false;
     chainPeak = 0;
+    runStats = createRunStats(stageDef);
     selectedCell = firstPlayableCell();
     effects.clear();
     board = makeFreshBoard();
@@ -407,6 +635,11 @@
     if (goalLabel) goalLabel.textContent = stageDef.target.toLocaleString("ja-JP");
     chainText.textContent = (combo || chainPeak) + " Chain";
     chainMeter.style.width = Math.min((combo || chainPeak) * 18, 100) + "%";
+    if (missionText) {
+      var complete = missionCleared(stageDef.mission);
+      missionText.textContent = missionProgressText(stageDef.mission);
+      missionText.classList.toggle("is-complete", complete);
+    }
   };
 
   cellFromPoint = function (clientX, clientY) {
@@ -424,13 +657,19 @@
   };
 
   drawBlock = function (row, col, x, y, width, height, color, effect) {
-    if (isBombBlock(color)) {
+    var powerup = powerupDef(color);
+    if (powerup && powerup.kind === "bomb") {
       drawBombBlock(x, y, width, height, effect);
       return;
     }
 
-    if (isLineClearBlock(color)) {
-      drawLineClearBlock(x, y, width, height, effect, color === ROW_CLEAR_ID ? "row" : "col");
+    if (powerup && (powerup.kind === "row" || powerup.kind === "col")) {
+      drawLineClearBlock(x, y, width, height, effect, powerup.kind);
+      return;
+    }
+
+    if (powerup) {
+      drawPowerBlock(x, y, width, height, effect, powerup);
       return;
     }
 
@@ -667,6 +906,78 @@
     boardCtx.restore();
   }
 
+  function drawPowerBlock(x, y, width, height, effect, powerup) {
+    var frameTime = speedNow();
+    var type = effectType(effect);
+    var age = Math.max(0, frameTime - effectStart(effect, frameTime));
+    var duration = effectDuration(effect, powerup.animation || POWER_ANIMATION);
+    var progress = Math.min(age / duration, 1);
+    var flashOn = Math.floor(age / 105) % 2 === 0;
+    var size = Math.min(width, height) * 0.84;
+    var radius = size * 0.5;
+    var centerX = x + width / 2;
+    var centerY = y + height / 2;
+    var scale = type === "clear" ? 1.04 + (flashOn ? 0.08 : 0) : 1;
+    var alpha = type === "clear" ? (flashOn ? 1 : 0.38) * (1 - Math.max(0, progress - 0.78) / 0.22) : 1;
+    var symbol = String(powerup.symbol || "?");
+    var fontScale = symbol.length > 1 ? 0.3 : 0.44;
+
+    if (type === "pop") {
+      scale = 1.05;
+      alpha = 0.82;
+    } else if (type === "drop") {
+      centerY += size * 0.04;
+    }
+
+    boardCtx.save();
+    boardCtx.globalAlpha = Math.max(0.18, alpha);
+    boardCtx.translate(centerX, centerY);
+    boardCtx.scale(scale, scale);
+
+    if (type === "clear") {
+      drawClearPulse(size, frameTime, effect);
+    }
+
+    var gradient = boardCtx.createLinearGradient(-radius, -radius, radius, radius);
+    gradient.addColorStop(0, powerup.from || "#fff6d0");
+    gradient.addColorStop(1, powerup.to || "#55c7ff");
+
+    boardCtx.shadowColor = "rgba(0, 0, 0, 0.3)";
+    boardCtx.shadowBlur = 8;
+    boardCtx.shadowOffsetY = 5;
+    boardCtx.fillStyle = gradient;
+    roundedRect(boardCtx, -radius, -radius, size, size, 12);
+    boardCtx.fill();
+    boardCtx.shadowBlur = 0;
+    boardCtx.shadowOffsetY = 0;
+
+    boardCtx.strokeStyle = "rgba(255, 255, 255, 0.62)";
+    boardCtx.lineWidth = Math.max(2, size * 0.055);
+    roundedRect(boardCtx, -radius + 2, -radius + 2, size - 4, size - 4, 10);
+    boardCtx.stroke();
+
+    boardCtx.globalAlpha *= 0.38;
+    boardCtx.strokeStyle = "#ffffff";
+    boardCtx.lineWidth = Math.max(1.6, size * 0.035);
+    boardCtx.beginPath();
+    boardCtx.moveTo(-radius * 0.58, -radius * 0.42);
+    boardCtx.lineTo(radius * 0.58, radius * 0.42);
+    boardCtx.moveTo(radius * 0.58, -radius * 0.42);
+    boardCtx.lineTo(-radius * 0.58, radius * 0.42);
+    boardCtx.stroke();
+    boardCtx.globalAlpha = Math.max(0.18, alpha);
+
+    boardCtx.fillStyle = "#ffffff";
+    boardCtx.strokeStyle = "rgba(24, 28, 44, 0.46)";
+    boardCtx.lineWidth = Math.max(2, size * 0.055);
+    boardCtx.font = "900 " + Math.max(14, Math.floor(size * fontScale)) + "px system-ui, sans-serif";
+    boardCtx.textAlign = "center";
+    boardCtx.textBaseline = "middle";
+    boardCtx.strokeText(symbol, 0, size * 0.03);
+    boardCtx.fillText(symbol, 0, size * 0.03);
+    boardCtx.restore();
+  }
+
   markGroups = function (groupCells) {
     clearTransientClasses();
     var startedAt = speedNow();
@@ -682,8 +993,10 @@
   };
 
   async function finishStageIfCleared() {
-    if (score < stageDef.target) return false;
+    if (moves > 0) return false;
     var isFinalStage = stageIndex >= STAGES.length - 1;
+    var clear = scoreCleared() && missionCleared(stageDef.mission);
+    var resultDetail = buildStageResultDetail(clear, isFinalStage);
 
     if (score > best) {
       best = score;
@@ -691,7 +1004,7 @@
     }
 
     updateStats(0);
-    comboBadge.textContent = "Stage " + (stageIndex + 1) + " Clear";
+    comboBadge.textContent = "Stage " + (stageIndex + 1) + (clear ? " Clear" : " Failed");
     comboBadge.classList.remove("show");
     void comboBadge.offsetWidth;
     comboBadge.classList.add("show");
@@ -700,22 +1013,17 @@
 
     if (
       window.ChainDropFlow &&
-      typeof window.ChainDropFlow.stageClear === "function" &&
-      window.ChainDropFlow.stageClear({
-        stageIndex: stageIndex,
-        stage: stageDef,
-        score: score,
-        final: isFinalStage,
-      })
+      typeof window.ChainDropFlow[clear ? "stageClear" : "stageFail"] === "function" &&
+      window.ChainDropFlow[clear ? "stageClear" : "stageFail"](resultDetail)
     ) {
       return true;
     }
 
-    setState(isFinalStage ? "All Clear" : "Stage Clear");
-    setCharacterMood("newBest");
+    setState(clear ? (isFinalStage ? "All Clear" : "Stage Clear") : "Failed");
+    setCharacterMood(clear ? "newBest" : "finish");
     render();
 
-    if (isFinalStage) {
+    if (!clear || isFinalStage) {
       return true;
     }
 
@@ -732,13 +1040,9 @@
       return;
     }
 
-    if (isBombBlock(board[row][col])) {
-      await triggerBomb(row, col);
-      return;
-    }
-
-    if (isLineClearBlock(board[row][col])) {
-      await triggerLineClear(row, col, board[row][col]);
+    var powerup = powerupDef(board[row][col]);
+    if (powerup) {
+      await triggerPowerUp(row, col, powerup);
       return;
     }
 
@@ -748,6 +1052,7 @@
       board[row][col] = null;
       moves -= 1;
       score += 10;
+      syncRunStats();
       updateStats();
       pulse(scoreText);
       setState("Drop");
@@ -784,6 +1089,62 @@
     }
   };
 
+  async function triggerPowerUp(row, col, powerup) {
+    locked = true;
+    try {
+      var cells = collectPowerCells(row, col, powerup);
+      var points = (powerup.score || 0) + cells.length * (powerup.cellScore || 40);
+      moves -= 1;
+      score += points;
+      runStats = syncRunStats();
+      if (powerup.stat === "line") {
+        runStats.lineClearsUsed += 1;
+      } else {
+        runStats.bombsUsed += 1;
+      }
+      syncRunStats();
+      updateStats();
+      showPowerBadge(powerup, points);
+      pulse(scoreText);
+      setState(powerup.label || "Power");
+      setCharacterMood("bigCombo", { duration: 1200 });
+      markPowerCells(cells, powerup.animation || POWER_ANIMATION);
+      vibrate(powerup.stat === "line" ? [14, 24, 14] : [18, 28, 18]);
+      await animateBoardFor(powerup.animation || POWER_ANIMATION);
+
+      for (var i = 0; i < cells.length; i += 1) {
+        var cell = cells[i];
+        board[cell.row][cell.col] = null;
+      }
+
+      render();
+      await settleBoardPaint();
+      await resolveBoard();
+
+      if (await finishStageIfCleared()) {
+        return;
+      }
+
+      if (moves <= 0) {
+        endGame();
+        return;
+      }
+
+      setState("Ready");
+      settleCharacterMood();
+    } catch (error) {
+      console.error("Chain Drop power-up failed", error);
+      setState("Ready");
+      settleCharacterMood();
+    } finally {
+      if (!gameOver && !paused) {
+        locked = false;
+        clearTransientClasses();
+        render();
+      }
+    }
+  }
+
   async function triggerBomb(row, col) {
     locked = true;
     try {
@@ -791,6 +1152,9 @@
       var points = BOMB_SCORE_BONUS + blastCells.length * 40;
       moves -= 1;
       score += points;
+      runStats = syncRunStats();
+      runStats.bombsUsed += 1;
+      syncRunStats();
       updateStats();
       showBombBadge(points);
       pulse(scoreText);
@@ -840,6 +1204,9 @@
       var points = LINE_SCORE_BONUS + lineCells.length * 45;
       moves -= 1;
       score += points;
+      runStats = syncRunStats();
+      runStats.lineClearsUsed += 1;
+      syncRunStats();
       updateStats();
       showLineBadge(lineType, points);
       pulse(scoreText);
@@ -892,6 +1259,7 @@
 
       combo += 1;
       chainPeak = Math.max(chainPeak, combo);
+      syncRunStats();
       var clearedCells = flattenGroups(groups);
       var rewards = createGroupRewards(groups);
       var clearScore = clearedCells.length * 45 * combo + groups.length * 80 + rewards.length * 90;
@@ -928,13 +1296,28 @@
     var targets = [];
     var occupied = {};
     for (var i = 0; i < groups.length; i += 1) {
-      var reward = pickLineReward(groups[i]) || (groups[i].length >= BOMB_MIN_GROUP ? pickBombReward(groups[i]) : null);
+      var reward = pickPowerReward(groups[i]);
       if (reward && !occupied[cellKey(reward.row, reward.col)]) {
         occupied[cellKey(reward.row, reward.col)] = true;
         targets.push(reward);
       }
     }
     return targets;
+  }
+
+  function pickPowerReward(group) {
+    var lineReward = pickLineReward(group);
+    if (lineReward) return lineReward;
+    if (group.length < BOMB_MIN_GROUP) return null;
+
+    var target = pickBombTarget(group);
+    return { row: target.row, col: target.col, id: rewardIdForGroup(group, target) };
+  }
+
+  function rewardIdForGroup(group, target) {
+    var maxIndex = Math.max(0, Math.min(REWARD_VARIANTS.length - 1, group.length - BOMB_MIN_GROUP));
+    var seed = group.length * 17 + target.row * 7 + target.col * 11 + chainPeak * 13;
+    return REWARD_VARIANTS[Math.abs(seed) % (maxIndex + 1)];
   }
 
   function pickBombReward(group) {
@@ -1070,26 +1453,176 @@
     return cells;
   }
 
+  function collectPowerCells(startRow, startCol, powerup) {
+    if (powerup.kind === "bomb") return collectBlastCells(startRow, startCol);
+    if (powerup.kind === "row") return collectLineCells(startRow, startCol, ROW_CLEAR_ID);
+    if (powerup.kind === "col") return collectLineCells(startRow, startCol, COL_CLEAR_ID);
+
+    var cells = [];
+    var lookup = {};
+    collectCellIfAvailable(cells, lookup, startRow, startCol);
+
+    if (powerup.kind === "cross") {
+      collectCrossCells(cells, lookup, startRow, startCol);
+    } else if (powerup.kind === "bigBomb") {
+      collectRadiusCells(cells, lookup, startRow, startCol, 2);
+    } else if (powerup.kind === "diagonal") {
+      collectDiagonalCells(cells, lookup, startRow, startCol);
+    } else if (powerup.kind === "color") {
+      collectColorCells(cells, lookup, startRow, startCol);
+    } else if (powerup.kind === "plus") {
+      collectPlusCells(cells, lookup, startRow, startCol);
+    } else if (powerup.kind === "checker") {
+      collectCheckerCells(cells, lookup, startRow, startCol);
+    } else if (powerup.kind === "ring") {
+      collectRingCells(cells, lookup, startRow, startCol);
+    }
+
+    return cells;
+  }
+
+  function collectCrossCells(cells, lookup, startRow, startCol) {
+    for (var col = 0; col < COLS; col += 1) {
+      collectCellIfAvailable(cells, lookup, startRow, col);
+    }
+    for (var row = 0; row < ROWS; row += 1) {
+      collectCellIfAvailable(cells, lookup, row, startCol);
+    }
+  }
+
+  function collectRadiusCells(cells, lookup, startRow, startCol, radius) {
+    for (var row = startRow - radius; row <= startRow + radius; row += 1) {
+      for (var col = startCol - radius; col <= startCol + radius; col += 1) {
+        collectCellIfAvailable(cells, lookup, row, col);
+      }
+    }
+  }
+
+  function collectDiagonalCells(cells, lookup, startRow, startCol) {
+    for (var offset = -ROWS; offset <= ROWS; offset += 1) {
+      collectCellIfAvailable(cells, lookup, startRow + offset, startCol + offset);
+      collectCellIfAvailable(cells, lookup, startRow + offset, startCol - offset);
+    }
+  }
+
+  function collectColorCells(cells, lookup, startRow, startCol) {
+    var targetColor = pickColorTarget(startRow, startCol);
+    if (!targetColor) {
+      collectRadiusCells(cells, lookup, startRow, startCol, 1);
+      return;
+    }
+
+    for (var row = 0; row < ROWS; row += 1) {
+      for (var col = 0; col < COLS; col += 1) {
+        if (board[row][col] === targetColor) {
+          collectCellIfAvailable(cells, lookup, row, col);
+        }
+      }
+    }
+  }
+
+  function collectPlusCells(cells, lookup, startRow, startCol) {
+    for (var offset = -2; offset <= 2; offset += 1) {
+      collectCellIfAvailable(cells, lookup, startRow + offset, startCol);
+      collectCellIfAvailable(cells, lookup, startRow, startCol + offset);
+    }
+  }
+
+  function collectCheckerCells(cells, lookup, startRow, startCol) {
+    var parity = (startRow + startCol) % 2;
+    for (var row = 0; row < ROWS; row += 1) {
+      for (var col = 0; col < COLS; col += 1) {
+        if ((row + col) % 2 === parity) {
+          collectCellIfAvailable(cells, lookup, row, col);
+        }
+      }
+    }
+  }
+
+  function collectRingCells(cells, lookup, startRow, startCol) {
+    var radius = 2;
+    for (var row = startRow - radius; row <= startRow + radius; row += 1) {
+      for (var col = startCol - radius; col <= startCol + radius; col += 1) {
+        if (Math.max(Math.abs(row - startRow), Math.abs(col - startCol)) === radius) {
+          collectCellIfAvailable(cells, lookup, row, col);
+        }
+      }
+    }
+  }
+
+  function pickColorTarget(startRow, startCol) {
+    var offsets = [
+      [0, -1],
+      [0, 1],
+      [-1, 0],
+      [1, 0],
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1],
+    ];
+
+    for (var i = 0; i < offsets.length; i += 1) {
+      var nearRow = startRow + offsets[i][0];
+      var nearCol = startCol + offsets[i][1];
+      if (nearRow < 0 || nearRow >= ROWS || nearCol < 0 || nearCol >= COLS) continue;
+      if (isNormalBlock(board[nearRow][nearCol])) return board[nearRow][nearCol];
+    }
+
+    var counts = {};
+    var bestColor = null;
+    var bestCount = 0;
+    for (var row = 0; row < ROWS; row += 1) {
+      for (var col = 0; col < COLS; col += 1) {
+        var color = board[row][col];
+        if (!isNormalBlock(color)) continue;
+        counts[color] = (counts[color] || 0) + 1;
+        if (counts[color] > bestCount) {
+          bestColor = color;
+          bestCount = counts[color];
+        }
+      }
+    }
+    return bestColor;
+  }
+
+  function isNormalBlock(value) {
+    return Boolean(value && !isVoidCell(value) && !isSpecialBlock(value));
+  }
+
+  function collectCellIfAvailable(cells, lookup, row, col) {
+    if (
+      row < 0 ||
+      row >= ROWS ||
+      col < 0 ||
+      col >= COLS ||
+      !isPlayableCell(row, col) ||
+      !board[row][col] ||
+      isVoidCell(board[row][col])
+    ) {
+      return;
+    }
+
+    var key = cellKey(row, col);
+    if (lookup[key]) return;
+    lookup[key] = true;
+    cells.push({ row: row, col: col });
+  }
+
   function collectLineCell(cells, row, col) {
     if (!isPlayableCell(row, col) || !board[row][col] || isVoidCell(board[row][col])) return;
     cells.push({ row: row, col: col });
   }
 
   function markBlastCells(cells) {
-    clearTransientClasses();
-    var startedAt = speedNow();
-    for (var i = 0; i < cells.length; i += 1) {
-      var cell = cells[i];
-      effects.set(cellKey(cell.row, cell.col), {
-        type: "clear",
-        startedAt: startedAt,
-        duration: BOMB_ANIMATION,
-      });
-    }
-    queueRender();
+    markPowerCells(cells, BOMB_ANIMATION);
   }
 
   function markLineCells(cells) {
+    markPowerCells(cells, LINE_ANIMATION);
+  }
+
+  function markPowerCells(cells, duration) {
     clearTransientClasses();
     var startedAt = speedNow();
     for (var i = 0; i < cells.length; i += 1) {
@@ -1097,7 +1630,7 @@
       effects.set(cellKey(cell.row, cell.col), {
         type: "clear",
         startedAt: startedAt,
-        duration: LINE_ANIMATION,
+        duration: duration || POWER_ANIMATION,
       });
     }
     queueRender();
@@ -1105,6 +1638,13 @@
 
   function showBombBadge(points) {
     comboBadge.textContent = "Bomb +" + points.toLocaleString("ja-JP");
+    comboBadge.classList.remove("show");
+    void comboBadge.offsetWidth;
+    comboBadge.classList.add("show");
+  }
+
+  function showPowerBadge(powerup, points) {
+    comboBadge.textContent = (powerup.label || "Power") + " +" + points.toLocaleString("ja-JP");
     comboBadge.classList.remove("show");
     void comboBadge.offsetWidth;
     comboBadge.classList.add("show");
@@ -1185,6 +1725,14 @@
     },
     current: function () {
       return stageIndex;
+    },
+    result: function (clear) {
+      var resolvedClear =
+        typeof clear === "undefined" ? scoreCleared() && missionCleared(stageDef.mission) : Boolean(clear);
+      return buildStageResultDetail(resolvedClear, stageIndex >= STAGES.length - 1);
+    },
+    missionText: function () {
+      return missionProgressText(stageDef.mission);
     },
   };
 
