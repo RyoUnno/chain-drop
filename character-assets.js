@@ -4,7 +4,7 @@
 (function () {
   var basePath = "assets/characters/";
   var expressions = {
-    idle: "idle.svg",
+    idle: "idle.jpg",
     cheer: "cheer.svg",
     wow: "wow.svg",
     worry: "worry.svg",

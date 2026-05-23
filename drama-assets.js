@@ -32,7 +32,7 @@
     characters: {
       mimi: {
         name: "Mimi",
-        image: characterAsset("idle.svg"),
+        image: characterAsset("idle.jpg"),
       },
       pico: {
         name: "Pico",
